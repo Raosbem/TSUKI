@@ -82,38 +82,24 @@
 .tst-head h2,.cat-head h2{font-family:var(--tsuki-display);font-weight:700;font-size:clamp(76px,10vw,144px);line-height:.84;letter-spacing:-.025em;text-transform:uppercase;margin:32px 0}
 .tst-head h2 span,.cat-head h2 span{color:#a8453d}
 .tst-head .sub,.cat-head .sub{font-size:14px;line-height:1.8;max-width:460px;color:#aba5a2}
-.section-label,.catalog-instruction,.track-number{font-family:"Courier New",monospace;font-weight:400;letter-spacing:.14em}
+.section-label,.catalog-instruction,.track-number,.tst-position{font-family:"Courier New",monospace;font-weight:400;letter-spacing:.14em}
 .section-label{display:flex;align-items:center;gap:12px;color:#bca9a3}
 .section-label::before{content:"";width:6px;height:6px;background:var(--tsuki-red);flex-shrink:0}
 .catalog-instruction{display:inline-block;margin-top:18px;font-size:10px;color:#d5c9c3}
-/* "ESCUCHA EN SPOTIFY ↗" es un enlace real a la playlist del colectivo */
-a.catalog-instruction{text-decoration:none;cursor:pointer;
-    border-bottom:1px solid #ffffff2e;padding-bottom:3px;
-    transition:color .25s ease,border-color .25s ease}
-a.catalog-instruction:hover,a.catalog-instruction:focus-visible{color:#fff;border-bottom-color:var(--tsuki-red)}
-a.catalog-instruction:focus-visible{outline:2px solid var(--tsuki-red);outline-offset:4px}
 #testimonios{padding-bottom:76px}
-/* CARRUSEL AUTOMÁTICO (marquee): la pista se desliza sola en bucle de izquierda
-   a derecha y nunca se para salvo que haya una tarjeta abierta (.abierta, la
-   pone el JS del index) o el usuario pida menos movimiento. Va de DERECHA a
-   IZQUIERDA y a paso lento (~28 px/s). El set de tarjetas
-   se repite dentro de la pista, así que el salto del bucle no se ve.
-   Ya no hay flechas ni contador: el movimiento es continuo. */
-.tst-row:focus-visible{outline:2px solid var(--tsuki-red);outline-offset:4px}
-#testimonios .tst-row{overflow:hidden;scrollbar-width:none;padding:6px 0 24px}
+.tst-controls{max-width:1200px;width:88%;margin:0 auto 22px;display:flex;align-items:center;justify-content:flex-end;gap:10px}
+.tst-position{margin-right:16px;font-size:12px;color:#bdaea7}
+.tst-controls button{display:grid;place-items:center;width:48px;height:48px;border:1px solid #ffffff35;border-radius:50%;background:transparent;color:#eee5e0;font-size:22px;cursor:pointer;transition:background .2s,border-color .2s}
+.tst-controls button:hover:not(:disabled){background:#ab3530;border-color:#ab3530}
+.tst-controls button:disabled{opacity:.3;cursor:default}
+.tst-controls button:focus-visible,.tst-row:focus-visible{outline:2px solid var(--tsuki-red);outline-offset:4px}
+#testimonios .tst-row{overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scroll-padding-left:max(6vw,calc((100vw - 1200px)/2));scrollbar-width:none;padding:6px max(6vw,calc((100vw - 1200px)/2)) 24px}
 #testimonios .tst-row::-webkit-scrollbar{display:none}
-/* los bordes se desvanecen para que las tarjetas entren y salgan sin corte */
-#testimonios .tst-row::before,#testimonios .tst-row::after{display:block;
-    content:"";position:absolute;top:0;bottom:0;width:12vw;max-width:200px;
-    z-index:5;pointer-events:none}
-#testimonios .tst-row::before{left:0;background:linear-gradient(90deg,#000,rgba(0,0,0,0))}
-#testimonios .tst-row::after{right:0;background:linear-gradient(270deg,#000,rgba(0,0,0,0))}
-#testimonios .tst-track{width:max-content;gap:24px;align-items:flex-start;
-    will-change:transform;
-    animation:tstScroll 190s linear infinite;animation-direction:normal}
-#testimonios .tst-row.abierta .tst-track{animation-play-state:paused}
-#testimonios .tst-track::after{content:none}
-#testimonios .tst-card{width:min(640px,64vw);padding:36px;border-radius:3px;background:#100e0e;border-color:#ffffff1a;box-shadow:none}
+#testimonios .tst-row::before,#testimonios .tst-row::after{display:none}
+#testimonios .tst-track{animation:none;transform:none;will-change:auto;gap:24px;align-items:stretch}
+#testimonios .tst-track::after{content:"";flex:0 0 max(0px,calc(100vw - 2 * max(6vw,calc((100vw - 1200px)/2)) - min(640px,64vw) - 24px))}
+#testimonios .tst-card{width:min(640px,64vw);padding:36px;border-radius:3px;background:#100e0e;scroll-snap-align:start;border-color:#ffffff1a;box-shadow:none}
+#testimonios .tst-card.is-current{border-color:#b45a496e;background:linear-gradient(140deg,#211514,#100e0e 75%)}
 .tst-av{width:76px;height:76px;border-radius:4px;filter:saturate(.7)}
 .tst-name{font-size:21px;border-bottom:0}
 .tst-role{margin-top:5px;font-size:10px}
@@ -141,8 +127,10 @@ a.catalog-instruction:focus-visible{outline:2px solid var(--tsuki-red);outline-o
  .tst-head h2,.cat-head h2{font-size:clamp(64px,18vw,108px);margin:26px 0;line-height:.88}
  .tst-head .sub,.cat-head .sub{font-size:13px}
  .tst-head{width:88%;margin-bottom:24px}
+ .tst-controls{margin-bottom:16px}
  #testimonios .tst-card{width:84vw;padding:24px}
- #testimonios .tst-track{gap:16px;animation-duration:130s}
+ #testimonios .tst-track{gap:16px}
+ #testimonios .tst-track::after{flex-basis:calc(4vw - 16px)}
  .tst-av{width:56px;height:56px}
  .tst-name{font-size:18px}
  .tst-stars{font-size:9px;letter-spacing:1px}
@@ -153,10 +141,8 @@ a.catalog-instruction:focus-visible{outline:2px solid var(--tsuki-red);outline-o
  .footer-wordmark{font-size:19vw}
 }
 @media(prefers-reduced-motion:reduce){
+ .tst-controls button{transition:none}
  .tst-quote{max-height:none}
- /* sin movimiento automático: la fila se arrastra a mano */
- #testimonios .tst-track{animation:none}
- #testimonios .tst-row{overflow-x:auto;overflow-y:hidden}
 }
 
 /* Visible artist links and navigation above page sections. */
@@ -181,24 +167,8 @@ a.catalog-instruction:focus-visible{outline:2px solid var(--tsuki-red);outline-o
 /* ================= PLAN: tarjeta de precio (hero -> aquí -> testimonios) =================
    Sección propia, con su propio bloque para no tocar las reglas compartidas
    .tst-head/.cat-head (así el catálogo y los testimonios quedan intactos). */
-#plan{position:relative;z-index:10;background:radial-gradient(ellipse at 50% 46%,#170c0c 0%,#000 72%);
+#plan{position:relative;z-index:10;background:radial-gradient(ellipse at 50% 0%,#170c0c 0%,#000 62%);
     padding:110px 6vw 90px}
-/* FUNDIDO hero (vídeo anclado) -> plan: el hero termina en negro puro y aquí
-   arranca el resplandor rojizo, así que sin velo se veía una costura recta al
-   cambiar de pantalla. Este degradado lo disuelve: negro sólido arriba que se
-   va a transparente hacia abajo. Queda por DEBAJO del contenido (z-index 0 vs
-   1 de .plan-head/.plan-card), por eso no apaga los textos. */
-#plan::before{content:"";position:absolute;left:0;right:0;top:0;z-index:0;
-    height:clamp(260px,48vh,620px);pointer-events:none;
-    background:linear-gradient(180deg,
-        #000 0%,
-        #000 14%,
-        rgba(0,0,0,.94) 34%,
-        rgba(0,0,0,.78) 52%,
-        rgba(0,0,0,.5) 70%,
-        rgba(0,0,0,.22) 86%,
-        rgba(0,0,0,0) 100%)}
-.plan-head,.plan-card{position:relative;z-index:1}
 .plan-head{max-width:1200px;margin:0 auto 52px;text-align:left;
     padding-top:32px;border-top:1px solid #ffffff20}
 .plan-head h2{font-family:var(--tsuki-display);font-weight:700;
@@ -221,16 +191,7 @@ a.catalog-instruction:focus-visible{outline:2px solid var(--tsuki-red);outline-o
 .plan-features{list-style:none;margin:0;padding:0}
 .plan-features li{display:flex;align-items:center;gap:20px;padding:26px 0;
     border-bottom:1px solid #ffffff14;color:#d8d3d0;
-    font-size:clamp(15px,1.3vw,18px);line-height:1.5;
-    transition:color .3s ease,text-shadow .3s ease}
-/* al pasar el ratón por una característica, el texto se ilumina un punto (y la
-   rayita roja de la izquierda enciende). Solo con ratón: en táctil el :hover se
-   queda pegado y dejaría la fila encendida al tocar. */
-@media(hover:hover){
-  .plan-features li:hover{color:#fff;text-shadow:0 0 14px rgba(255,236,232,.38)}
-  .plan-features li:hover .dash{background:#c7463f;box-shadow:0 0 10px rgba(199,70,63,.65)}
-}
-.plan-features .dash{transition:background .3s ease,box-shadow .3s ease}
+    font-size:clamp(15px,1.3vw,18px);line-height:1.5}
 .plan-features li:last-child{border-bottom:0;padding-bottom:6px}
 .plan-features .dash{flex:0 0 auto;width:20px;height:2px;background:var(--tsuki-red)}
 
