@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TSUKIBOYZ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{background:#000;color:#fff;font-family:"Plus Jakarta Sans",-apple-system,"Helvetica Neue",Arial,sans-serif;overflow-x:hidden}
+  /* cursor ratón metálico en todo el sitio (punta arriba-izq = hotspot) */
+  html,body{cursor:url("assets/mouse-cursor.png") 1 0, auto}
+  #gl,#stage,.track,#copy-bl,#copy-br,#hero-title{cursor:inherit}
+
+  /* pista de scroll: da altura para poder scrollear y girar la cabeza.
+     290vh: recorrido real = 190vh, repartido en CUATRO tiempos que no se pisan
+     (ver umbrales en onScroll): cabeza sola → título → caja izquierda entera →
+     caja derecha. Si se cambia esta altura, hay que reescalar los umbrales de
+     onScroll() y de headY(). */
+  .track{height:290vh;position:relative;z-index:2;pointer-events:none}
+
+  /* escenario 3D fijo a pantalla completa; el canvas es transparente y deja ver #bg */
+  #stage{position:fixed;inset:0;z-index:1;background:transparent}
+  #gl{display:block;width:100vw;height:100vh}
+
+  /* ---------- FONDO por capas (detrás del canvas 3D) ---------- */
+  /* base: negro con una leve subida de luz al centro-alto → sensación de profundidad
+     (charco/telón de estudio) en vez de negro plano. El grano evita el banding. */
+  #bg{position:fixed;inset:0;z-index:0;pointer-events:none;
+      background:radial-gradient(125% 95% at 50% 40%, #0c0c0d 0%, #070707 46%, #000 80%)}
+  #bg>div{position:absolute;inset:0}
+
+  /* charco de luz fría (plata) detrás de la cabeza — profundidad, no relleno */
+  .bg-glow{background:radial-gradient(58% 52% at 50% 45%,
+              rgba(223,223,223,.055), rgba(223,223,223,.018) 42%, transparent 70%);
+          will-change:transform,opacity}
+
+  /* bloom rojo como PUNTUACIÓN: sube desde el borde inferior (bajo la cabeza),
+     lejos del texto de las cajas. Screen para que "encienda" sobre el negro. */
+  .bg-red{background:radial-gradient(52% 40% at 50% 101%,
+              rgba(171,53,48,.24), rgba(171,53,48,.07) 45%, transparent 64%);
+          mix-blend-mode:screen}
+
+  /* grano/textura sutil (ruido SVG) → quita el plano y el banding */
+  .bg-grain{opacity:.06;mix-blend-mode:overlay;background-size:130px 130px;
+      background-image:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='130'%20height='130'%3E%3Cfilter%20id='n'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='0.9'%20numOctaves='2'%20stitchTiles='stitch'/%3E%3CfeColorMatrix%20type='saturate'%20values='0'/%3E%3C/filter%3E%3Crect%20width='100%25'%20height='100%25'%20filter='url(%23n)'/%3E%3C/svg%3E")}
+
+  /* viñeta: oscurece esquinas para enfocar el centro */
+  .bg-vignette{background:radial-gradient(120% 100% at 50% 44%,
+              transparent 55%, rgba(0,0,0,.5) 100%)}
+
+  /* respiración ambiental MUY sutil (no scroll, no trigger): se apaga con reduced-motion */
+  @media (prefers-reduced-motion:no-preference){
+    .bg-glow{animation:bgGlow 16s ease-in-out infinite alternate}
+    .bg-red {animation:bgRed 19s ease-in-out infinite alternate}
+  }
+  @keyframes bgGlow{from{opacity:.8;transform:scale(1)}to{opacity:1;transform:scale(1.05)}}
+  @keyframes bgRed {from{opacity:.7}to{opacity:1}}
+
+  /* pantalla de carga */
+  #loader{position:fixed;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;
+          background:#000;transition:opacity .8s ease;letter-spacing:.4em;font-size:12px;color:#555}
+  #loader.hide{opacity:0;pointer-events:none}
+
+  /* hint de scroll */
+  #hint{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:3;
+        font-size:10px;letter-spacing:.5em;color:#666;text-transform:uppercase;
+        transition:opacity .5s ease;pointer-events:none}
+
+  /* ---------- 1) TÍTULO SOBRE LA CABEZA (blanco, mayúsculas, en arco) ---------- */
+  /* la opacidad y el desplazamiento vertical los controla el scroll (JS): entra
+     con el 1er scroll y luego se va hacia arriba. El arco lo dan los <path> del SVG */
+  #hero-title{position:fixed;top:14vh;left:50%;
+        z-index:4;max-width:92vw;pointer-events:none;
+        opacity:0;transform:translate(-50%,42px);will-change:transform,opacity;
+        transition:opacity 1.4s ease, transform 1.4s cubic-bezier(.22,1,.36,1)}
+  #hero-title.in{opacity:1;transform:translate(-50%,0)}
+  #hero-title.out{opacity:0;transform:translate(-50%,-90px)}
+  /* título en texto normal (tipografía del sistema, como la captura) */
+  #hero-title .ttl{font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue","Segoe UI",Arial,sans-serif;
+        color:#dfdfdf;font-weight:500;letter-spacing:-.015em;line-height:1.1;
+        text-align:center;font-size:clamp(34px,5.8vw,74px);white-space:nowrap}
+  /* palabra clave con SUBRAYADO rojo dibujado a mano (mismo gesto que los
+     subrayados de las cajas de copy, pero en rojo de marca) */
+  #hero-title .l2{position:relative;display:inline-block}
+  #hero-title .l2 .uline{position:absolute;left:-2%;bottom:-.22em;width:104%;height:.34em;
+        overflow:visible;pointer-events:none}
+  #hero-title .l2 .uline path{fill:none;stroke:#ab3530;stroke-width:5;
+        vector-effect:non-scaling-stroke;stroke-linecap:round;stroke-linejoin:round;
+        stroke-dasharray:1;stroke-dashoffset:1;
+        transition:stroke-dashoffset .9s cubic-bezier(.65,0,.35,1) .25s}
+  /* TRIGGER: al aparecer el título el subrayado se dibuja de una y se queda */
+  #hero-title.in .uline path,
+  #hero-title.out .uline path{stroke-dashoffset:0}
+
+  /* ---------- 2 y 3) CAJAS DE COPY EN LAS ESQUINAS INFERIORES ---------- */
+  .corner{position:fixed;bottom:13vh;z-index:4;pointer-events:none;max-width:min(42ch,44vw)}
+  #copy-bl{left:5vw;text-align:left}
+  #copy-br{right:5vw;text-align:right}
+
+  .corner .eyebrow{font-size:clamp(11px,.95vw,13px);font-weight:800;
+        letter-spacing:.24em;text-transform:uppercase;color:rgba(255,255,255,.5);
+        margin-bottom:18px;
+        opacity:0;transform:translateY(52px);
+        transition:opacity 1.5s ease,transform 1.5s cubic-bezier(.22,1,.36,1)}
+
+  .corner h1{font-size:clamp(27px,3.6vw,52px);font-weight:600;line-height:1.09;
+        letter-spacing:-.03em;color:#fff;text-wrap:balance;
+        opacity:0;transform:translateY(58px);
+        transition:opacity 1.6s ease,transform 1.6s cubic-bezier(.22,1,.36,1)}
+
+  /* palabra clave: ROJO de marca (el mismo del subrayado del título) + subrayado
+     blanco dibujado a mano — eco invertido del hero (texto blanco / trazo rojo) */
+  .corner h1 .hl{position:relative;display:inline-block;white-space:nowrap;
+        color:#ab3530}
+  .corner h1 .hl .squiggle{position:absolute;left:-3%;bottom:-.30em;width:106%;height:.5em;
+        overflow:visible;pointer-events:none}
+  .corner h1 .hl .squiggle path{fill:none;stroke:#eef2f7;stroke-width:7;
+        stroke-linecap:round;stroke-linejoin:round;
+        stroke-dasharray:1;stroke-dashoffset:1;
+        transition:stroke-dashoffset 1s cubic-bezier(.65,0,.35,1) .35s}
+  .corner h1.show .hl .squiggle path{stroke-dashoffset:0}
+
+  .corner .lead{margin-top:22px;font-size:clamp(14px,1.2vw,18px);line-height:1.6;
+        font-weight:400;color:#9aa0a8;max-width:36ch;
+        opacity:0;transform:translateY(58px);
+        transition:opacity 1.6s ease,transform 1.6s cubic-bezier(.22,1,.36,1)}
+  #copy-br .lead{margin-left:auto}   /* alinea el bloque de texto a la derecha */
+
+  .corner .show{opacity:1;transform:translateY(0)}
+
+  /* móvil / pantallas estrechas: apila para que no se solapen sobre la cabeza */
+  @media (max-width:760px){
+    #hero-title{top:5vh;width:92vw}
+    .corner{position:fixed;max-width:88vw;left:6vw;right:auto;text-align:left}
+    #copy-bl{bottom:26vh}
+    #copy-br{bottom:6vh;text-align:left}
+    #copy-br .lead{margin-left:0}
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    #hero-title h2{animation:none}
+  }
+
+  /* ================= CATÁLOGO (sección bajo el hero) =================
+     Va DESPUÉS del .track: al seguir scrolleando SUBE y cubre el hero fijo
+     (fondo propio negro + z-index alto). No toca nada del hero congelado. */
+  #catalogo{position:relative;z-index:10;background:#000;
+      padding:15vh 5vw 17vh}
+  /* SOLAPE/FUNDIDO con el hero: un velo negro que se extiende POR ENCIMA del
+     borde superior del catálogo (top negativo) y se desvanece hacia arriba.
+     Al scrollear, el catálogo sube y este velo funde el fondo del hero con su
+     negro → no hay corte duro (la costura desaparece). pointer-events:none. */
+  #catalogo::before{content:"";position:absolute;left:0;right:0;top:-42vh;height:42vh;
+      background:linear-gradient(180deg,
+          rgba(0,0,0,0) 0,
+          rgba(0,0,0,.35) 46%,
+          rgba(0,0,0,.8) 78%,
+          #000 100%);
+      pointer-events:none}
+
+  /* encabezado de SUBAPARTADO: sigue la línea del hero pero con MENOR jerarquía
+     (más pequeño, no compite con el título de la web). */
+  .cat-head{max-width:1200px;margin:0 auto 7vh;text-align:center}
+  .cat-head h2{font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue","Segoe UI",Arial,sans-serif;
+      color:#dfdfdf;font-weight:600;letter-spacing:-.02em;line-height:1.16;
+      font-size:clamp(24px,3.2vw,40px)}
+  .cat-head .sub{margin-top:16px;color:#9aa0a8;font-weight:400;
+      font-size:clamp(13px,1.05vw,16px)}
+
+  /* GUILLEMETS «» rojos (banderitas) flanqueando TODA la frase → marca que es
+     subapartado sin competir con el hero. Aparecen animándose al entrar la sección. */
+  .guill{display:inline-block;color:#ab3530;font-weight:700;
+      font-size:1.06em;line-height:1;vertical-align:baseline;
+      opacity:0;transition:opacity .55s ease, transform .7s cubic-bezier(.22,1,.36,1)}
+  /* la ultima palabra y la banderita de cierre viajan juntas al partir linea */
+  .nb{white-space:nowrap}
+  .guill-open{margin-right:.16em;transform:translateX(-.55em) scale(.7)}
+  .guill-close{margin-left:.16em;transform:translateX(.55em) scale(.7)}
+  /* TRIGGER: las banderitas se despliegan hacia la frase cuando la sección entra */
+  #catalogo.in .guill{opacity:1;transform:none}
+  #catalogo.in .guill-close{transition-delay:.08s}
+
+  /* rejilla de portadas cuadradas, responsive */
+  .cat-grid{max-width:1200px;margin:0 auto;display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px}
+
+  /* cada portada: reveal por trigger (sube + fade), escalonado por JS.
+     Es un DIV (no <a>) porque lleva DOS destinos: la portada → Spotify y
+     cada artista → su Instagram (anchors superpuestos, no anidados). */
+  /* esquinas EN PICO (sin redondeo) + PROFUNDIDAD: sombra ESTÁTICA que la despega
+     del fondo (como si flotase). La sombra no se anima (evita repintados que
+     atascan el scroll en Safari sobre el canvas 3D fijo). */
+  .cover{position:relative;aspect-ratio:1/1;overflow:hidden;
+      background:#0a0a0a;
+      box-shadow:0 14px 30px -12px rgba(0,0,0,.82);
+      opacity:0;transform:translateY(42px);
+      transition:opacity .7s ease, transform .7s cubic-bezier(.22,1,.36,1)}
+  .cover.in{opacity:1;transform:none}
+  /* al pasar el ratón se ELEVA un poco (solo transform → GPU, sin repintar sombra) */
+  .cover.in:hover{transform:translateY(-6px)}
+  .cover img{position:relative;z-index:0;width:100%;height:100%;object-fit:cover;display:block;
+      filter:brightness(.82) saturate(.96);
+      transition:filter .5s ease, transform .8s cubic-bezier(.22,1,.36,1)}
+  .cover:hover img{filter:brightness(1) saturate(1.03);transform:scale(1.06)}
+  /* enlace a Spotify = toda la portada (capa base) */
+  .cover .sp-link{position:absolute;inset:0;z-index:1}
+
+  /* scrim que oscurece la portada al hover para que el texto SOBRE ella se lea */
+  .cover .scrim{position:absolute;inset:0;z-index:2;pointer-events:none;opacity:0;
+      background:rgba(0,0,0,.56);transition:opacity .45s ease}
+  .cover:hover .scrim{opacity:1}
+
+  /* info SOBRE la portada, centrada (canción + artista), no debajo */
+  .cover .info{position:absolute;inset:0;z-index:3;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      gap:7px;padding:16px;text-align:center;pointer-events:none;
+      opacity:0;transform:translateY(8px);
+      transition:opacity .4s ease, transform .5s cubic-bezier(.22,1,.36,1)}
+  .cover:hover .info{opacity:1;transform:none}
+  .cover .info .t{color:#dfdfdf;font-weight:700;letter-spacing:-.01em;
+      font-size:clamp(14px,1.15vw,17px);line-height:1.18;
+      text-shadow:0 1px 10px rgba(0,0,0,.7)}
+  .cover .info .artists{font-size:clamp(11px,.92vw,13px);line-height:1.35;
+      color:#c9ccd1;text-shadow:0 1px 8px rgba(0,0,0,.7)}
+  /* nombre de artista: clicable → Instagram (por encima del enlace de Spotify) */
+  .cover .info .artists a.ig{pointer-events:auto;position:relative;z-index:4;
+      color:#dfdfdf;text-decoration:none;
+      border-bottom:1px solid rgba(223,223,223,.35);transition:border-color .25s,color .25s}
+  .cover .info .artists a.ig:hover{color:#fff;border-bottom-color:#ab3530}
+
+  /* borde rojo fino al hover (rojo = puntuación) */
+  /* realce de luz en el borde superior (siempre), sin borde rojo */
+  .cover::after{content:"";position:absolute;inset:0;z-index:3;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.07);
+      transition:box-shadow .5s ease;pointer-events:none}
+  .cover:hover::after{box-shadow:inset 0 1px 0 rgba(255,255,255,.11)}
+
+  /* táctil (sin hover): imagen a plena luz y la info visible con scrim suave */
+  @media (hover:none){
+    .cover img{filter:brightness(.9)}
+    .cover .scrim{opacity:1;background:rgba(0,0,0,.42)}
+    .cover .info{opacity:1;transform:none}
+  }
+  @media (max-width:760px){
+    #catalogo{padding:12vh 5vw 14vh}
+    .cat-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .cover{opacity:1;transform:none;transition:none}
+    .cover.in:hover{transform:none}
+    .cover:hover img{transform:none}
+    .guill{opacity:1;transform:none;transition:none}
+  }
+
+  /* ================= TESTIMONIOS (sección bajo el catálogo) =================
+     Una fila tipo carrusel (marquee) de tarjetas-reseña que se mueve sola.
+     Textos ÍNTEGROS: la tarjeta muestra el arranque con un
+     degradado y, al pasar el ratón / tocar, el marquee se pausa y la tarjeta se
+     DESPLIEGA mostrando el testimonio completo. Paleta rojo/negro/plata.
+     Fluye tras el catálogo (mismo negro, sin corte). */
+  #testimonios{position:relative;z-index:10;background:#000;
+      padding:8vh 0 18vh;overflow:hidden}
+  .tst-head{max-width:1200px;margin:0 auto 6vh;padding:0 5vw;text-align:center}
+  .tst-head h2{font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue","Segoe UI",Arial,sans-serif;
+      color:#dfdfdf;font-weight:600;letter-spacing:-.02em;line-height:1.16;
+      font-size:clamp(24px,3.2vw,40px)}
+  .tst-head .sub{margin-top:16px;color:#9aa0a8;font-weight:400;
+      font-size:clamp(13px,1.05vw,16px)}
+  /* las banderitas del subapartado también animan al entrar la sección */
+  #testimonios.in .guill{opacity:1;transform:none}
+  #testimonios.in .guill-close{transition-delay:.08s}
+
+  /* fila-carrusel: recorta el marquee y desvanece los dos bordes (máscara) para
+     que las tarjetas entren/salgan sin corte duro. */
+  .tst-row{position:relative;overflow:hidden;padding:18px 0}
+  .tst-row + .tst-row{margin-top:22px}
+  .tst-row::before,.tst-row::after{content:"";position:absolute;top:0;bottom:0;width:12vw;
+      max-width:180px;z-index:5;pointer-events:none}
+  .tst-row::before{left:0;background:linear-gradient(90deg,#000,rgba(0,0,0,0))}
+  .tst-row::after{right:0;background:linear-gradient(270deg,#000,rgba(0,0,0,0))}
+  /* la pista: ancho por contenido, se duplica el set → loop sin salto */
+  .tst-track{display:flex;gap:18px;width:max-content;
+      will-change:transform;animation:tstScroll 92s linear infinite}
+  .tst-row[data-dir="r"] .tst-track{animation-direction:reverse}
+  /* pausa al pasar el ratón (para poder leer) */
+  .tst-row:hover .tst-track{animation-play-state:paused}
+  @keyframes tstScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+  /* TARJETA reseña. Altura colapsada fija; al hover crece hacia abajo saliéndose
+     de la fila (que mantiene su alto) → no empuja el layout. */
+  .tst-card{position:relative;flex:0 0 auto;width:clamp(300px,30vw,380px);
+      box-sizing:border-box;background:#0d0d0f;
+      border:1px solid rgba(223,223,223,.10);border-radius:16px;
+      padding:20px 22px 0;
+      box-shadow:0 16px 34px -18px rgba(0,0,0,.85);
+      opacity:0;transform:translateY(20px);
+      transition:opacity .7s ease, transform .7s cubic-bezier(.22,1,.36,1),
+                 border-color .35s ease, box-shadow .45s ease;
+      overflow:hidden}
+  #testimonios.in .tst-card{opacity:1;transform:none}
+  .tst-card:hover{border-color:rgba(171,53,48,.55);
+      box-shadow:0 22px 46px -18px rgba(0,0,0,.9);z-index:20}
+
+  .tst-top{display:flex;align-items:center;gap:13px}
+  .tst-av{width:50px;height:50px;border-radius:50%;object-fit:cover;flex:0 0 auto;
+      background:#161618;border:2px solid rgba(223,223,223,.18)}
+  .tst-id{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1 1 auto}
+  .tst-name{color:#dfdfdf;font-weight:700;letter-spacing:-.01em;
+      font-size:clamp(15px,1.15vw,17px);line-height:1.1;text-decoration:none;
+      border-bottom:1px solid rgba(223,223,223,.28);align-self:flex-start;
+      transition:color .25s, border-color .25s}
+  .tst-name:hover{color:#fff;border-bottom-color:#ab3530}
+  .tst-role{color:#8f959d;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;
+      display:flex;align-items:center;gap:6px}
+  .tst-role .flag{font-size:14px;letter-spacing:0}
+  .tst-stars{margin-left:auto;flex:0 0 auto;color:#ab3530;letter-spacing:2px;
+      font-size:14px;line-height:1}
+
+  /* cita: caja de alto fijo con degradado inferior; al hover se abre a completo */
+  .tst-quote{position:relative;margin:15px 0 0;
+      max-height:150px;overflow:hidden;
+      transition:max-height .55s cubic-bezier(.22,1,.36,1)}
+  .tst-quote p{margin:0 0 20px;color:#c7cad0;font-weight:400;
+      font-size:14px;line-height:1.58;letter-spacing:.005em}
+  .tst-quote::after{content:"";position:absolute;left:0;right:0;bottom:0;height:64px;
+      background:linear-gradient(180deg,rgba(13,13,15,0),#0d0d0f 82%);
+      pointer-events:none;opacity:1;transition:opacity .4s ease}
+  .tst-card:hover .tst-quote{max-height:1400px}
+  .tst-card:hover .tst-quote::after{opacity:0}
+
+  /* táctil: sin hover, la card queda abierta y el marquee más lento (se puede leer) */
+  @media (hover:none){
+    .tst-quote{max-height:none}
+    .tst-quote::after{display:none}
+    .tst-card{padding-bottom:20px}
+    .tst-track{animation-duration:140s}
+  }
+  @media (max-width:760px){
+    .tst-card{width:78vw}
+    .tst-track{animation-duration:68s}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .tst-track{animation:none}
+    .tst-row{overflow-x:auto;scrollbar-width:none}
+    .tst-row::-webkit-scrollbar{display:none}
+    .tst-card{opacity:1;transform:none;transition:border-color .35s, box-shadow .45s}
+    .tst-quote{max-height:none}
+    .tst-quote::after{display:none}
+    .tst-card{padding-bottom:20px}
+  }
+</style>
+</head>
+<body>
+  <!-- FONDO: capas detrás del canvas 3D. Da profundidad/textura sin tocar el hero.
+       Orden (de atrás a delante): base con gradiente radial → charco de luz fría →
+       bloom rojo (puntuación) → grano → viñeta. -->
+  <div id="bg" aria-hidden="true">
+    <div class="bg-glow"></div>
+    <div class="bg-red"></div>
+    <div class="bg-grain"></div>
+    <div class="bg-vignette"></div>
+  </div>
+
+  <div id="stage"><canvas id="gl"></canvas></div>
+
+  <!-- 1) TÍTULO sobre la cabeza (1º en aparecer) — texto normal + círculo rojo a mano -->
+  <div id="hero-title">
+    <div class="ttl">PLAN MENSUAL DE<br>DESARROLLO <span class="l2">ARTÍSTICO<svg class="uline" viewBox="0 0 300 40" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M5,27 C42,15 72,31 112,21 C152,12 182,31 222,19 C252,10 276,25 295,17"/></svg></span></div>
+  </div>
+
+  <!-- 2) caja abajo-izquierda (2ª en aparecer) -->
+  <div id="copy-bl" class="corner">
+    <p class="eyebrow">Un mes · Un equipo</p>
+    <h1>No necesitas otro beat.<br>Necesitas <span class="hl">un equipo.<svg class="squiggle" viewBox="0 0 300 40" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M5,27 C42,15 72,31 112,21 C152,12 182,31 222,19 C252,10 276,25 295,17"/></svg></span></h1>
+    <p class="lead">Un mes trabajando codo con codo con productores e ingenieros que se meten de verdad en tu proyecto. Lograremos darle forma a tu propio sonido.</p>
+  </div>
+
+  <!-- 3) caja abajo-derecha = 2ª propuesta de valor (3ª en aparecer) -->
+  <div id="copy-br" class="corner">
+    <p class="eyebrow">Un rumbo · Un criterio</p>
+    <h1>Tu música no necesita más intentos.<br>Necesita <span class="hl">dirección.<svg class="squiggle" viewBox="0 0 300 40" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M5,27 C42,15 72,31 112,21 C152,12 182,31 222,19 C252,10 276,25 295,17"/></svg></span></h1>
+    <p class="lead">Juntos ponemos rumbo a tu proyecto: cada decisión de producción, mezcla y referencias, empuja en la misma dirección. Dejas de caminar solo tema a tema y empezamos a construir tu identidad artística.</p>
+  </div>
+
+  <div class="track"></div>
+
+  <!-- ====== CATÁLOGO: sube y cubre el hero fijo al seguir scrolleando ====== -->
+  <section id="catalogo">
+    <div class="cat-head">
+      <h2><span class="guill guill-open" aria-hidden="true">«</span>Esta es una selección de temas que hemos producido, mezclado y <span class="nb">masterizado<span class="guill guill-close" aria-hidden="true">»</span></span></h2>
+      <p class="sub">Toca una portada para escucharla · toca al artista para ver su Instagram.</p>
+    </div>
+    <div class="cat-grid" id="cat-grid"></div>
+  </section>
+
+  <!-- ====== TESTIMONIOS: carrusel (marquee) de reseñas, va tras el catálogo ====== -->
+  <section id="testimonios">
+    <div class="tst-head">
+      <h2><span class="guill guill-open" aria-hidden="true">«</span>Lo que dicen los artistas que nos confiaron su <span class="nb">proyecto<span class="guill guill-close" aria-hidden="true">»</span></span></h2>
+      <p class="sub">Pasa por encima de una tarjeta para leerla entera · toca el nombre para ver su Instagram.</p>
+    </div>
+    <div class="tst-row" data-dir="l"><div class="tst-track" aria-hidden="false"></div></div>
+  </section>
+
+  <div id="hint">scroll</div>
+  <div id="loader">TSUKIBOYZ</div>
+
+  <!-- modo preview: ?reveal muestra el copy sin scroll (independiente del 3D) -->
+  <script>
+    if (location.search.includes('reveal')) {
+      var _t=document.getElementById('hero-title');
+      _t.style.opacity=1; _t.style.transform='translateX(-50%)';
+      document.querySelectorAll('.corner .eyebrow, .corner h1, .corner .lead')
+        .forEach(el=>{ el.classList.add('show');
+          el.style.transition='none'; el.style.opacity=1; el.style.transform='none'; });
+      document.querySelectorAll('.corner h1 .hl .squiggle path')
+        .forEach(p=>{ p.style.transition='none'; p.style.strokeDashoffset=0; });
+      var _r=document.querySelector('#hero-title .uline path');
+      if(_r){ _r.style.transition='none'; _r.style.strokeDashoffset=0; }
+      var _h=document.getElementById('hint'); if(_h) _h.style.opacity=0;
+      var _l=document.getElementById('loader'); if(_l){ _l.style.transition='none'; _l.style.opacity=0; _l.style.display='none'; }
+    }
+  </script>
+
+  <script type="importmap">
+  {"imports":{
+    "three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }}
+  </script>
+
+  <script type="module">
+  import * as THREE from 'three';
+  import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+  import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
+
+  const canvas = document.getElementById('gl');
+  // alpha:true → el canvas es transparente y deja ver el fondo (capas DOM #bg).
+  // La cabeza cromada NO cambia: el metal refleja scene.environment, no el fondo.
+  const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
+  renderer.setClearColor(0x000000, 0);
+  // tope 1.5x (antes 2x): en pantallas Retina el shader de la tormenta ocupa
+  // toda la pantalla y a 2x se pintan ~1.8 veces más píxeles por fotograma.
+  renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
+  renderer.setSize(innerWidth, innerHeight);
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 0.92;
+
+  const scene = new THREE.Scene();
+  // sin fondo en la escena: el fondo lo pintan las capas DOM (#bg) detrás del canvas.
+  scene.background = null;
+
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.03).texture;
+
+  const camera = new THREE.PerspectiveCamera(32, innerWidth/innerHeight, 0.01, 100);
+  camera.position.set(0, 0, 4.6);
+
+  // encuadra la cabeza (medio ~0.95u) con margen, en horizontal y vertical.
+  // En móvil vertical la restricción es el ancho: aleja la cámara para no recortarla.
+  const SHRINK = 2.3;                            // cabeza a ~43% del tamaño anterior
+  function fitView(){
+    const half = 0.95 * 1.22 * SHRINK;           // extensión + margen (alejada)
+    const vt = Math.tan(THREE.MathUtils.degToRad(camera.fov)/2);
+    const distV = half / vt;
+    const distH = half / (vt * camera.aspect);
+    camera.position.z = Math.max(distV, distH);
+    camera.updateProjectionMatrix();
+  }
+
+  // luces: cromo limpio sobre negro, sin acento rojo
+  scene.add(new THREE.AmbientLight(0xffffff, 0.22));
+  const key = new THREE.DirectionalLight(0xdfe6ff, 1.7); key.position.set(2.5, 3, 4); scene.add(key);
+  const rim = new THREE.DirectionalLight(0xbfd0ff, 1.4); rim.position.set(-3.5, 0.5, -1.5); scene.add(rim);
+  const fill = new THREE.DirectionalLight(0x334155, 0.9); fill.position.set(-2, -1, 3); scene.add(fill);
+
+  // ---------------------------------------------------------------------------
+  // TORMENTA DE RAYOS ROJOS (estilo Stranger Things): plano a pantalla completa,
+  // detrás de la cabeza, dentro del MISMO canvas. Nubes por ruido fractal (FBM)
+  // que sólo se ven cuando un RAYO las ilumina (cada rayo = un trigger, no scroll).
+  // Entre rayos el plano es transparente → se ve el fondo de profundidad (#bg).
+  // ---------------------------------------------------------------------------
+  const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const STORM = 1.0;                                  // intensidad maestra de los rayos
+  const bgScene = new THREE.Scene();
+  const bgCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  const stormUniforms = {
+    uTime:    { value: 0 },
+    uFlash:   { value: 0 },                           // 0..1 intensidad del destello actual
+    uFlashPos:{ value: new THREE.Vector2(0.5, 0.68) },// dónde cae el rayo (uv)
+    uAspect:  { value: innerWidth / innerHeight }
+  };
+  const stormMat = new THREE.ShaderMaterial({
+    uniforms: stormUniforms,
+    transparent: true,
+    depthTest: false,
+    depthWrite: false,
+    blending: THREE.NormalBlending,
+    vertexShader: `
+      varying vec2 vUv;
+      void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }
+    `,
+    fragmentShader: `
+      precision highp float;
+      varying vec2 vUv;
+      uniform float uTime, uFlash, uAspect;
+      uniform vec2 uFlashPos;
+      float hash(vec2 p){ p=fract(p*vec2(123.34,345.45)); p+=dot(p,p+34.345); return fract(p.x*p.y); }
+      float noise(vec2 p){
+        vec2 i=floor(p), f=fract(p);
+        float a=hash(i), b=hash(i+vec2(1.,0.)), c=hash(i+vec2(0.,1.)), d=hash(i+vec2(1.,1.));
+        vec2 u=f*f*(3.-2.*f);
+        return mix(mix(a,b,u.x), mix(c,d,u.x), u.y);
+      }
+      float fbm(vec2 p){
+        float v=0., a=.5; mat2 m=mat2(1.6,1.2,-1.2,1.6);
+        for(int i=0;i<5;i++){ v+=a*noise(p); p=m*p; a*=.5; }
+        return v;
+      }
+      void main(){
+        vec2 uv=vUv;
+        vec2 p=vec2(uv.x*uAspect, uv.y);
+        float t=uTime*0.04;
+        // nubes que se agitan lentamente (domain warping)
+        vec2 q=p*2.6 + vec2(t*0.6, t*0.15);
+        float warp=fbm(q + fbm(q*0.5 + t*0.2)*1.4);
+        float density=smoothstep(0.30, 1.0, warp);
+        density*=smoothstep(0.04, 0.55, uv.y);        // protege la zona del copy (abajo)
+
+        // iluminación del rayo, localizada alrededor de uFlashPos
+        vec2 fp=vec2(uFlashPos.x*uAspect, uFlashPos.y);
+        float dist=distance(p, fp);
+        float atten=exp(-dist*1.7);
+        float lit=uFlash*(0.18 + atten);              // 0.18 = leve subida de todo el cielo
+        float glow=lit*(0.30 + 0.80*density);         // las nubes densas brillan más
+        float core=uFlash*pow(atten,2.5)*density;     // núcleo caliente cerca del impacto
+
+        vec3 deep=vec3(0.34,0.03,0.02);               // rojo profundo (sombra de nube)
+        vec3 red =vec3(0.671,0.208,0.188);            // #ab3530 (marca)
+        vec3 hot =vec3(1.0,0.60,0.34);                // núcleo caliente naranja-blanco
+        vec3 col=mix(deep, red, clamp(glow*1.4, 0., 1.));
+        col=mix(col, hot, clamp(core*1.3, 0., 1.));
+
+        float inten=glow + core*1.6;
+        float alpha=clamp(inten, 0., 1.);
+        gl_FragColor=vec4(col*alpha, alpha);          // premultiplicado (composita sobre #bg)
+      }
+    `
+  });
+  bgScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), stormMat));
+  renderer.autoClear = false;                         // renderizamos tormenta y cabeza a mano
+
+  // programador de rayos: ráfagas con parpadeo realista (trigger), no arrastre por scroll
+  let stormNext = 1.4;                                // instante del próximo rayo
+  let stormT0 = -10;                                  // instante en que empezó el rayo actual
+  function strikeEnv(dt){                             // envolvente de un rayo (dt = s desde su inicio)
+    if (dt < 0) return 0.0;
+    const a = Math.exp(-dt*6.5);                      // caída principal
+    const flick = 0.55 + 0.45*Math.sin(dt*55.0)*Math.exp(-dt*3.0); // parpadeo que se apaga
+    let v = a*flick;
+    if (dt > 0.10) v += 0.6*Math.exp(-(dt-0.10)*8.0);// segundo fogonazo (re-strike)
+    return Math.min(1.0, v*STORM);
+  }
+
+  // grupo raíz de la cabeza (orientado con el ratón)
+  const rig = new THREE.Group();
+  scene.add(rig);
+
+  // ---- carga del modelo ----
+  const loader = new GLTFLoader();
+  loader.load('assets/cabeza-opt.glb', (gltf)=>{
+    const head = gltf.scene;
+    const box = new THREE.Box3().setFromObject(head);
+    const c = box.getCenter(new THREE.Vector3());
+    const s = box.getSize(new THREE.Vector3());
+    head.position.sub(c);                       // centrar en el origen
+    const maxd = Math.max(s.x, s.y, s.z);
+    const scale = 1.9 / maxd;                    // normalizar tamaño
+    head.scale.setScalar(scale);
+    rig.add(head);
+    fitView();
+    document.getElementById('loader').classList.add('hide');
+  }, undefined, (err)=>{ console.error('GLB error', err); });
+
+  // ---- interacción: scroll + parallax de ratón ----
+  let scrollN = 0;         // 0..1 según scroll
+  const track = document.querySelector('.track');
+  const heroTitle = document.getElementById('hero-title');
+  // caja 2 (abajo-izq)
+  const blEy = document.querySelector('#copy-bl .eyebrow');
+  const blH  = document.querySelector('#copy-bl h1');
+  const blP  = document.querySelector('#copy-bl .lead');
+  // caja 3 (abajo-der)
+  const brEy = document.querySelector('#copy-br .eyebrow');
+  const brH  = document.querySelector('#copy-br h1');
+  const brP  = document.querySelector('#copy-br .lead');
+  const REVEAL = location.search.includes('reveal');
+  const AT = new URLSearchParams(location.search).get('at');   // fija scroll para pruebas/headless
+  const FLASH = new URLSearchParams(location.search).get('flash'); // congela un rayo para inspeccionar/afinar
+  const clamp = (v,a,b)=>Math.min(b,Math.max(a,v));
+
+  // Medidas cacheadas: leer track.offsetHeight DENTRO del scroll obliga al
+  // navegador a recalcular el layout en cada evento (eso era el "trabado").
+  // Se mide una vez y solo se vuelve a medir al redimensionar.
+  const hintEl = document.getElementById('hint');
+  let trackH = 0, maxScroll = 1;
+  let heroOn = true;        // ¿se ve el hero? si no, el loop 3D no pinta
+  let hintOn = true;        // estado del "scroll" para no escribir estilo en cada evento
+  function measure(){
+    trackH = track.offsetHeight;
+    maxScroll = Math.max(1, trackH - innerHeight);
+  }
+  measure();
+
+  function onScroll(){
+    const y = scrollY;
+    scrollN = clamp(y / maxScroll, 0, 1);
+    if (AT !== null) scrollN = clamp(parseFloat(AT), 0, 1);
+    heroOn = y < trackH + 8;          // a partir de ahí el catálogo lo tapa entero
+    const wantHint = !(scrollN > 0.02);
+    if (wantHint !== hintOn){ hintOn = wantHint; hintEl.style.opacity = wantHint ? 1 : 0; }
+    if (REVEAL) return;   // en modo proof todo queda forzado visible por el script de arriba
+
+    // 1º) TÍTULO: entra SUAVE (transición CSS, igual que las cajas) y luego se va arriba.
+    //    Se conmutan clases .in/.out en vez de scrubbear por scroll → sin tirones.
+    // TÍTULO + su círculo rojo (trigger): al entrar en .in el CSS dibuja el óvalo de una.
+    // CUATRO TIEMPOS sobre un recorrido de 190vh (entre paréntesis, el punto en vh).
+    // 1º) 0–12vh: la cabeza sola, sin nada de texto.
+    // 2º) TÍTULO: entra a 12vh y se va arriba a 88vh.
+    heroTitle.classList.toggle('in',  scrollN > 0.063 && scrollN < 0.463);  // 12vh → 88vh
+    heroTitle.classList.toggle('out', scrollN >= 0.463);
+
+    // 3º) CAJA IZQUIERDA: entra entera (eyebrow → titular → párrafo) entre 92 y 110vh.
+    blEy.classList.toggle('show', scrollN > 0.484);  //  92vh
+    blH .classList.toggle('show', scrollN > 0.526);  // 100vh
+    blP .classList.toggle('show', scrollN > 0.579);  // 110vh
+    // 4º) CAJA DERECHA: no arranca hasta 132vh, con la izquierda ya puesta
+    //     (22vh de respiro entre bloque y bloque: cada uno tiene su scroll).
+    brEy.classList.toggle('show', scrollN > 0.695);  // 132vh
+    brH .classList.toggle('show', scrollN > 0.737);  // 140vh
+    brP .classList.toggle('show', scrollN > 0.789);  // 150vh
+  }
+  addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+
+  let mx=0, my=0, tmx=0, tmy=0;
+  addEventListener('pointermove', e=>{
+    tmx = (e.clientX/innerWidth  - 0.5);
+    tmy = (e.clientY/innerHeight - 0.5);
+  });
+
+  addEventListener('resize', ()=>{
+    measure();
+    camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth, innerHeight);
+    stormUniforms.uAspect.value = innerWidth/innerHeight;
+    fitView();
+  });
+
+  // ---- loop ----
+  // la cabeza APUNTA al cursor (lookAt): la cara gira para mirarlo de verdad,
+  // con rango horizontal y vertical marcado. Sin rotación por scroll.
+  const REACH = 2.2;                              // cuán agudo es el ángulo de mirada (mayor = más giro)
+  const target = new THREE.Vector3();
+  const clock = new THREE.Clock();
+
+  // recorrido vertical de la cabeza en unidades de mundo:
+  // al entrar (scroll 0) está BAJA para dejar hueco al título; con el scroll SUBE.
+  const HEAD_Y_LOW = -0.85, HEAD_Y_HIGH = 0.85;
+  const easeIO = t => t<0.5 ? 2*t*t : 1-Math.pow(-2*t+2,2)/2;
+  function headY(n){
+    const t = clamp((n-0.32)/0.68, 0, 1);         // empieza a subir a los ~60vh y acaba arriba al final
+    return HEAD_Y_LOW + (HEAD_Y_HIGH-HEAD_Y_LOW)*easeIO(t);
+  }
+  let headYs = HEAD_Y_LOW;                         // valor suavizado
+
+  function tick(){
+    const t = clock.getElapsedTime();
+
+    // TORMENTA: nubes a la deriva + rayos rojos por ráfagas (trigger).
+    stormUniforms.uTime.value = REDUCE ? 0.0 : t;
+    if (FLASH !== null){                              // depuración: rayo fijo y centrado
+      stormUniforms.uFlash.value = parseFloat(FLASH);
+      stormUniforms.uFlashPos.value.set(0.5, 0.62);
+    } else if (!REDUCE){
+      if (t > stormNext){                            // dispara un rayo nuevo
+        stormT0 = t;
+        stormUniforms.uFlashPos.value.set(0.15 + Math.random()*0.70,
+                                          0.48 + Math.random()*0.42);
+        // a veces réplica rápida, casi siempre una pausa larga (cielo a oscuras)
+        stormNext = t + (Math.random()<0.3 ? 0.22 + Math.random()*0.35
+                                           : 2.6 + Math.random()*4.2);
+      }
+      stormUniforms.uFlash.value = strikeEnv(t - stormT0);
+    } else {
+      stormUniforms.uFlash.value = 0.05;             // hint estático, sin parpadeo
+    }
+
+    mx += (tmx-mx)*0.08; my += (tmy-my)*0.08;    // suavizado del ratón
+    headYs += (headY(scrollN)-headYs)*0.07;      // suavizado del desplazamiento vertical (más suave)
+
+    // posición vertical (recorrido por scroll) + respiración muy sutil. X siempre 0 (centrada).
+    rig.position.y = headYs + Math.sin(t*0.8)*0.02;
+
+    // punto objetivo en el plano de la cámara, desplazado por el cursor.
+    // pantalla derecha -> +X, pantalla arriba -> +Y (cara sube). Se suma la Y de la cabeza
+    // para que la mirada neutra siga siendo al frente en cualquier altura.
+    const z = camera.position.z;
+    target.set(mx * z * REACH, -my * z * REACH + rig.position.y, z);
+    rig.lookAt(target);
+
+    // dos pasadas: 1) tormenta al fondo (transparente entre rayos), 2) cabeza delante.
+    // Si el catálogo ya tapa el hero, no se pinta nada: la GPU queda libre para
+    // el scroll del catálogo y los testimonios.
+    if (heroOn){
+      renderer.clear();
+      renderer.render(bgScene, bgCamera);
+      renderer.clearDepth();
+      renderer.render(scene, camera);
+    }
+    requestAnimationFrame(tick);
+  }
+  tick();
+  </script>
+
+  <!-- ====== CATÁLOGO: datos reales + montaje de rejilla + reveal por trigger ======
+       Script clásico (no depende del 3D): si el módulo de arriba fallara, el
+       catálogo se construye igual. -->
+  <script>
+  (function(){
+    // 17 portadas del COLECTIVO (carpeta portadas/PORTADAS SPOTIFY) con su título,
+    // enlace de Spotify y los artistas → cada uno con su Instagram (del PDF INFO).
+    // formato: [fichero, título, spotify, [ [artista, instagram], ... ] ]
+    var IG = {
+      chris:  "https://www.instagram.com/rojowest/",
+      jwayz:  "https://www.instagram.com/jwayzpr/",
+      mike:   "https://www.instagram.com/mikecvstillo/",
+      gzvz:   "https://www.instagram.com/gzvz._/",
+      luxxo:  "https://www.instagram.com/luisarredondo1",
+      vincez: "https://www.instagram.com/vincez/",
+      zumi:   "https://www.instagram.com/lil_zumi/",
+      jhony:  "https://www.instagram.com/jhonyexemx/",
+      jack:   "https://www.instagram.com/jaack.wav/",
+      tsuki:  "https://www.instagram.com/tsukiboyz_/",
+      cos:    "https://www.instagram.com/cosbrusko/",
+      louizz: "https://www.instagram.com/younglouizzpr/",
+      kiddye: "https://www.instagram.com/itskidi_/",
+      leo:    "https://www.instagram.com/leoequis/",
+      eduartz:"https://www.instagram.com/eduartzzzz/",
+      sahir:  "https://www.instagram.com/sahir.pr/"
+    };
+    var WORKS = [
+      ["222","222","https://open.spotify.com/album/738heD0CvLp14nQnkYijn3?si=i2zGONVnRNOBO_cjz5U39Q",[["Chris Redd",IG.chris]]],
+      ["quimica","Química","https://open.spotify.com/intl-es/track/1oNWqPDsbA1QZA8X3CVvLB?si=ab9ca62677d540a0",[["J Wayz",IG.jwayz],["Mike Castillo",IG.mike],["Gzvz",IG.gzvz]]],
+      ["chiclana","Chiclana","https://open.spotify.com/intl-es/track/32mS7ByWKa07Q5P2VGcH50?si=be94ea577b124879",[["J Wayz",IG.jwayz]]],
+      ["girasoles","Girasoles","https://open.spotify.com/intl-es/track/3PTfjp8f9SyqgUAp9qI14e?si=a60cca57104840b2",[["Luxxo",IG.luxxo]]],
+      ["sin-direccion","Sin Dirección","https://open.spotify.com/intl-es/track/0Y9Rvg2IUtaIPlc4JgZZi1?si=c1983c0d10c44c72",[["Mike Castillo",IG.mike],["Gzvz",IG.gzvz]]],
+      ["sus-mejores-poses","Sus mejores poses","https://open.spotify.com/intl-es/track/4I0FzeN80qNtEFFatxGbdW?si=3226732731894043",[["Mike Castillo",IG.mike],["Vincez",IG.vincez]]],
+      ["paloma-mami","Paloma Mami","https://open.spotify.com/intl-es/track/04tW6RDk1ONCQ0arFOfZza?si=f3e029a7f52440e3",[["Chris Redd",IG.chris]]],
+      ["ritual","Ritual","https://open.spotify.com/intl-es/track/6ItyQnFbcjvmKvHn7mtcsR?si=512116a5cb024d03",[["Gzvz",IG.gzvz],["Lil Zumi",IG.zumi],["Jhony Exe",IG.jhony]]],
+      ["rainao","Rainao","https://open.spotify.com/intl-es/track/6j89S3rTaAy9W41KOTZZug?si=bc89c05f8de1447f",[["Jack",IG.jack],["Tsukiboyz",IG.tsuki]]],
+      ["mia-mia","Mia Mia","https://open.spotify.com/intl-es/track/1700G7z2IGelwelpPMowFX?si=b037743f264a40d1",[["COS",IG.cos],["Tsukiboyz",IG.tsuki]]],
+      ["todo-o-nada","Todo o nada","https://open.spotify.com/intl-es/track/2iZSEMCoF09TQu7ck0qZej?si=7a2df208a5994228",[["Young Louizz",IG.louizz]]],
+      ["musamorfosis","Musamorfosis, Vol. 1","https://open.spotify.com/intl-es/album/7oMS9mDxE4zvpVi1mkZIF5?si=BR50IaKFRQOKqXyeFYTqRQ",[["J Wayz",IG.jwayz]]],
+      ["holbox","Holbox","https://open.spotify.com/intl-es/track/1BglvHHCb7Kdx7KcUsDamV?si=e98fc4a40d29461d",[["Kiddye",IG.kiddye],["Gzvz",IG.gzvz]]],
+      ["insegura","Insegura","https://open.spotify.com/intl-es/track/4RudTW9afTk9IoXyBNkfty?si=963038576a2e4476",[["Leo X",IG.leo]]],
+      ["olvido","Olvido","https://open.spotify.com/intl-es/track/6Xhv2Jx0bkeswVeBFKrWSq?si=86f4982d55c746c5",[["Eduartz",IG.eduartz],["Tsukiboyz",IG.tsuki]]],
+      ["no-se-va","No se va","https://open.spotify.com/intl-es/track/2WkcvSZW9hCxRbTeUcyubv?si=a543c61bbf9a4137",[["Chris Redd",IG.chris],["Gzvz",IG.gzvz]]],
+      ["ninguna-te-supera","Ninguna te supera","https://open.spotify.com/intl-es/track/5w4EKNT86kgObOnz1Qmvxv?si=f4d80146698c46a0",[["Sahir",IG.sahir]]]
+    ];
+    var esc = function(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
+    var grid = document.getElementById('cat-grid');
+    if (!grid) return;
+    var html = '';
+    for (var k=0;k<WORKS.length;k++){
+      var f=WORKS[k][0], t=WORKS[k][1], u=WORKS[k][2], arts=WORKS[k][3];
+      var et = esc(t);
+      var aHtml = arts.map(function(a){
+        return '<a class="ig" href="'+esc(a[1])+'" target="_blank" rel="noopener"'
+             + ' aria-label="'+esc(a[0])+' en Instagram">'+esc(a[0])+'</a>';
+      }).join(', ');
+      html += '<div class="cover">'
+           +  '<img src="assets/portadas/'+f+'.jpg" alt="'+et+'" loading="lazy">'
+           +  '<a class="sp-link" href="'+esc(u)+'" target="_blank" rel="noopener" aria-label="'+et+' en Spotify"></a>'
+           +  '<span class="scrim" aria-hidden="true"></span>'
+           +  '<span class="info">'
+           +    '<span class="t">'+et+'</span>'
+           +    '<span class="artists">'+aHtml+'</span>'
+           +  '</span>'
+           +  '</div>';
+    }
+    grid.innerHTML = html;
+
+    // reveal por TRIGGER (suave), respetando reduced-motion y el modo ?reveal
+    var cat = document.getElementById('catalogo');
+    var cells = [].slice.call(grid.querySelectorAll('.cover'));
+    var force = location.search.includes('reveal');
+    var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (force || reduce || !('IntersectionObserver' in window)){
+      cat.classList.add('in');
+      cells.forEach(function(c){ c.classList.add('in'); });
+      return;
+    }
+    // dibuja el círculo del encabezado cuando la sección entra
+    var headObs = new IntersectionObserver(function(es){
+      es.forEach(function(e){ if(e.isIntersecting){ cat.classList.add('in'); headObs.disconnect(); } });
+    }, {threshold:0.15});
+    headObs.observe(cat);
+    // celdas escalonadas al entrar
+    var i=0;
+    var cellObs = new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        if(e.isIntersecting){
+          var el=e.target;
+          el.style.transitionDelay = (Math.min(i,8)*70)+'ms';
+          el.classList.add('in'); i++;
+          cellObs.unobserve(el);
+          // limpiar el delay tras revelarse: si no, el hover (elevación) heredaría
+          // ese retardo y respondería tarde.
+          el.addEventListener('transitionend', function h(){
+            el.style.transitionDelay=''; el.removeEventListener('transitionend', h);
+          });
+        }
+      });
+    }, {threshold:0.12, rootMargin:'0px 0px -8% 0px'});
+    cells.forEach(function(c){ cellObs.observe(c); });
+  })();
+  </script>
+
+  <!-- ====== TESTIMONIOS: puebla el carrusel + reveal por trigger ====== -->
+  <script>
+  (function(){
+    // testimonios REALES (texto íntegro, verbatim del documento; solo se ha
+    // normalizado el nombre de la marca a "Tsukiboyz"). Cada uno: nombre → su IG.
+    var TST = [
+      { img:"jhony", name:"Jhony Exe", ig:"https://www.instagram.com/jhonyexemx/",
+        flag:"🇲🇽", place:"México",
+        q:"Trabajar con Tsukiboyz fue una experiencia que superó completamente mis expectativas. Me sorprendió mucho la rapidez y facilidad con la que entienden una idea y logran llevarla a un nivel mucho mayor. En “Ritual”, junto a Lil Zumi y Gzvz, tuvimos la oportunidad de unir talento mexicano y puertorriqueño, y el resultado fue una pieza muy cabrona. Desde la instrumental y los sonidos armónicos de las voces hasta la mezcla y el máster, se nota el nivel de detalle y excelencia que ponen en su trabajo. Los considero uno de los equipos de producción más duros de esta nueva generación. Creo que están construyendo algo muy importante para los nuevos sonidos y que tienen todo para marcar una diferencia en lo que viene para las próximas generaciones." },
+      { img:"eduartz", name:"Eduartz", ig:"https://www.instagram.com/eduartzzzz/",
+        flag:"🇲🇽", place:"México",
+        q:"Yo trabajo todo con los Tsukiboyz y puedo decir que es el mejor equipo de trabajo que pudiera tener. Desde que empecé a trabajar con ellos siempre ha habido una buena conexión para hacer música y siento que eso se refleja mucho en el resultado final. Todo el proceso, desde que tenemos la maqueta hasta el máster final, es increíble. Me gusta mucho que no se trata solamente de mandar stems, te entregan el tema y ya, sino que están pendientes de cada detalle para que la canción termine sonando como tiene que sonar. El trabajo que hacen desde la producción hasta el mix y máster es durísimo. Siento que entienden muy bien lo que quiero transmitir con cada canción y saben llevar mis ideas a otro nivel sin quitarles mi esencia como artista. Ya he trabajado varias veces con ellos y honestamente no conozco a unos más duros que ellos. Es un equipo con el que puedo trabajar tranquilo porque sé que la canción va a quedar bien y que siempre vamos a buscar que quede todavía mejor. Si eres artista y estás buscando gente que realmente se involucre en tu proyecto y cuide tu música como si fuera propia, yo los recomiendo 200%." },
+      { img:"louizz", name:"Young Louizz", ig:"https://www.instagram.com/younglouizzpr/",
+        flag:"🇵🇷", place:"Puerto Rico",
+        q:"En verdad, súper buena experiencia. El trabajo que hacen aquí está a otro nivel, desde los beats hasta la grabación, mezcla y masterización. Se nota que saben lo que están haciendo y que le ponen cariño a cada detalle. El ingeniero fue bien profesional, escuchó lo que yo quería y supo cómo llevar el sonido a donde tenía que llegar. El resultado final quedó brutal, mucho mejor de lo que esperaba. El ambiente también está bien cómodo y el equipo de trabajo es bien chévere. 100% recomendado para cualquiera que quiera sacar un proyecto con buen sonido y que se lo trabajen de verdad. Definitivamente volvería." },
+      { img:"jwayz", name:"Jwayz", ig:"https://www.instagram.com/jwayzpr/",
+        flag:"🇵🇷", place:"Puerto Rico",
+        q:"He trabajado varios temas con los Tsukiboyz y puedo decir que esos le meten durísimo. Desde la producción hasta la ingeniería, siempre se aseguran de que cada tema quede sonando a otro nivel. Tienen oído, creatividad y saben captar rápido la visión del artista sin quitarle su esencia. Tremendo equipo y un ambiente bien cómodo para trabajar. Los recomiendo al 100%, están duros duros🔥" }
+    ];
+    var esc = function(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
+    var STARS = "★★★★★";
+    // una tarjeta; dup=true → copia decorativa para el loop (oculta a lectores/tab)
+    function card(t, dup){
+      var hid = dup ? ' aria-hidden="true"' : '';
+      var tab = dup ? ' tabindex="-1"' : '';
+      return '<article class="tst-card"'+hid+'>'
+        + '<div class="tst-top">'
+        +   '<img class="tst-av" src="assets/testimonios/'+t.img+'.jpg" alt="'+esc(t.name)+'" loading="lazy">'
+        +   '<div class="tst-id">'
+        +     '<a class="tst-name" href="'+esc(t.ig)+'" target="_blank" rel="noopener"'+tab
+        +        ' aria-label="'+esc(t.name)+' en Instagram">'+esc(t.name)+'</a>'
+        +     '<span class="tst-role"><span class="flag" aria-hidden="true">'+t.flag+'</span>'+esc(t.place)+'</span>'
+        +   '</div>'
+        +   '<div class="tst-stars" aria-label="5 de 5" title="5 de 5">'+STARS+'</div>'
+        + '</div>'
+        + '<div class="tst-quote"><p>«'+esc(t.q)+'»</p></div>'
+        + '</article>';
+    }
+    // rellena una pista con el set (en el orden dado) DUPLICADO → loop sin salto
+    function fill(track, order){
+      var real='', copy='';
+      order.forEach(function(i){ real += card(TST[i], false); copy += card(TST[i], true); });
+      track.innerHTML = real + copy;
+    }
+    var rows = document.querySelectorAll('#testimonios .tst-row');
+    if (!rows.length) return;
+    // el set se repite 2 veces dentro de la pista para que, en pantallas anchas,
+    // nunca se vea hueco entre la última tarjeta y la primera del bucle.
+    fill(rows[0].querySelector('.tst-track'), [0,1,2,3,0,1,2,3]);   // carrusel único →
+
+    // reveal por TRIGGER (banderitas + tarjetas), respetando reduced-motion y ?reveal
+    var sec = document.getElementById('testimonios');
+    var force = location.search.includes('reveal');
+    var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (force || reduce || !('IntersectionObserver' in window)){ sec.classList.add('in'); return; }
+    var obs = new IntersectionObserver(function(es){
+      es.forEach(function(e){ if(e.isIntersecting){ sec.classList.add('in'); obs.disconnect(); } });
+    }, {threshold:0.12});
+    obs.observe(sec);
+  })();
+  </script>
+</body>
+</html>

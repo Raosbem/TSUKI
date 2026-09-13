@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "web-nueva",
+      "runtimeExecutable": "/usr/bin/python3",
+      "runtimeArgs": ["/private/tmp/claude-501/-Users-isaacjesus-Documents-TSUKIBOYZ-PAGINA-WEB-web-nueva/7c47befc-322a-4dfe-a6a5-f5b58a711d77/scratchpad/serve.py"],
+      "port": 8777
+    }
+  ]
+}

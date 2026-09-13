@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TSUKIBOYZ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{background:#000;color:#fff;font-family:"Plus Jakarta Sans",-apple-system,"Helvetica Neue",Arial,sans-serif;overflow-x:hidden}
+  /* cursor ratón metálico en todo el sitio (punta arriba-izq = hotspot) */
+  html,body{cursor:url("assets/mouse-cursor.png") 1 0, auto}
+  #gl,#stage,.track,#copy-bl,#copy-br,#hero-title{cursor:inherit}
+
+  /* pista de scroll: da altura para poder scrollear y girar la cabeza */
+  .track{height:300vh;position:relative;z-index:2;pointer-events:none}
+
+  /* escenario 3D fijo a pantalla completa; el canvas es transparente y deja ver #bg */
+  #stage{position:fixed;inset:0;z-index:1;background:transparent}
+  #gl{display:block;width:100vw;height:100vh}
+
+  /* ---------- FONDO por capas (detrás del canvas 3D) ---------- */
+  /* base: negro con una leve subida de luz al centro-alto → sensación de profundidad
+     (charco/telón de estudio) en vez de negro plano. El grano evita el banding. */
+  #bg{position:fixed;inset:0;z-index:0;pointer-events:none;
+      background:radial-gradient(125% 95% at 50% 40%, #0c0c0d 0%, #070707 46%, #000 80%)}
+  #bg>div{position:absolute;inset:0}
+
+  /* charco de luz fría (plata) detrás de la cabeza — profundidad, no relleno */
+  .bg-glow{background:radial-gradient(58% 52% at 50% 45%,
+              rgba(223,223,223,.055), rgba(223,223,223,.018) 42%, transparent 70%)}
+
+  /* bloom rojo como PUNTUACIÓN: sube desde el borde inferior (bajo la cabeza),
+     lejos del texto de las cajas. Screen para que "encienda" sobre el negro. */
+  .bg-red{background:radial-gradient(52% 40% at 50% 101%,
+              rgba(171,53,48,.24), rgba(171,53,48,.07) 45%, transparent 64%);
+          mix-blend-mode:screen}
+
+  /* grano/textura sutil (ruido SVG) → quita el plano y el banding */
+  .bg-grain{opacity:.06;mix-blend-mode:overlay;background-size:130px 130px;
+      background-image:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='130'%20height='130'%3E%3Cfilter%20id='n'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='0.9'%20numOctaves='2'%20stitchTiles='stitch'/%3E%3CfeColorMatrix%20type='saturate'%20values='0'/%3E%3C/filter%3E%3Crect%20width='100%25'%20height='100%25'%20filter='url(%23n)'/%3E%3C/svg%3E")}
+
+  /* viñeta: oscurece esquinas para enfocar el centro */
+  .bg-vignette{background:radial-gradient(120% 100% at 50% 44%,
+              transparent 55%, rgba(0,0,0,.5) 100%)}
+
+  /* respiración ambiental MUY sutil (no scroll, no trigger): se apaga con reduced-motion */
+  @media (prefers-reduced-motion:no-preference){
+    .bg-glow{animation:bgGlow 16s ease-in-out infinite alternate}
+    .bg-red {animation:bgRed 19s ease-in-out infinite alternate}
+  }
+  @keyframes bgGlow{from{opacity:.8;transform:scale(1)}to{opacity:1;transform:scale(1.05)}}
+  @keyframes bgRed {from{opacity:.7}to{opacity:1}}
+
+  /* pantalla de carga */
+  #loader{position:fixed;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;
+          background:#000;transition:opacity .8s ease;letter-spacing:.4em;font-size:12px;color:#555}
+  #loader.hide{opacity:0;pointer-events:none}
+
+  /* hint de scroll */
+  #hint{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:3;
+        font-size:10px;letter-spacing:.5em;color:#666;text-transform:uppercase;
+        transition:opacity .5s ease;pointer-events:none}
+
+  /* ---------- 1) TÍTULO SOBRE LA CABEZA (blanco, mayúsculas, en arco) ---------- */
+  /* la opacidad y el desplazamiento vertical los controla el scroll (JS): entra
+     con el 1er scroll y luego se va hacia arriba. El arco lo dan los <path> del SVG */
+  #hero-title{position:fixed;top:14vh;left:50%;
+        z-index:4;max-width:92vw;pointer-events:none;
+        opacity:0;transform:translate(-50%,42px);will-change:transform,opacity;
+        transition:opacity 1.4s ease, transform 1.4s cubic-bezier(.22,1,.36,1)}
+  #hero-title.in{opacity:1;transform:translate(-50%,0)}
+  #hero-title.out{opacity:0;transform:translate(-50%,-90px)}
+  /* título en texto normal (tipografía del sistema, como la captura) */
+  #hero-title .ttl{font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue","Segoe UI",Arial,sans-serif;
+        color:#dfdfdf;font-weight:500;letter-spacing:-.015em;line-height:1.1;
+        text-align:center;font-size:clamp(34px,5.8vw,74px);white-space:nowrap}
+  /* palabra clave con círculo rojo dibujado a mano */
+  #hero-title .l2{position:relative;display:inline-block}
+  #hero-title .l2 .ring{position:absolute;left:-7%;top:-22%;width:114%;height:150%;
+        overflow:visible;pointer-events:none}
+  #hero-title .l2 .ring path{fill:none;stroke:#ab3530;stroke-width:4;
+        vector-effect:non-scaling-stroke;stroke-linecap:round;stroke-linejoin:round;
+        stroke-dasharray:1;stroke-dashoffset:1;
+        transition:stroke-dashoffset .9s cubic-bezier(.65,0,.35,1) .25s}
+  /* TRIGGER: al aparecer el título el círculo se dibuja de una y se queda */
+  #hero-title.in .ring path,
+  #hero-title.out .ring path{stroke-dashoffset:0}
+
+  /* ---------- 2 y 3) CAJAS DE COPY EN LAS ESQUINAS INFERIORES ---------- */
+  .corner{position:fixed;bottom:13vh;z-index:4;pointer-events:none;max-width:min(42ch,44vw)}
+  #copy-bl{left:5vw;text-align:left}
+  #copy-br{right:5vw;text-align:right}
+
+  .corner .eyebrow{font-size:clamp(11px,.95vw,13px);font-weight:800;
+        letter-spacing:.24em;text-transform:uppercase;color:rgba(255,255,255,.5);
+        margin-bottom:18px;
+        opacity:0;transform:translateY(52px);
+        transition:opacity 1.5s ease,transform 1.5s cubic-bezier(.22,1,.36,1)}
+
+  .corner h1{font-size:clamp(27px,3.6vw,52px);font-weight:600;line-height:1.09;
+        letter-spacing:-.03em;color:#fff;text-wrap:balance;
+        opacity:0;transform:translateY(58px);
+        transition:opacity 1.6s ease,transform 1.6s cubic-bezier(.22,1,.36,1)}
+
+  /* palabra clave con subrayado dibujado a mano */
+  .corner h1 .hl{position:relative;display:inline-block;white-space:nowrap}
+  .corner h1 .hl .squiggle{position:absolute;left:-3%;bottom:-.30em;width:106%;height:.5em;
+        overflow:visible;pointer-events:none}
+  .corner h1 .hl .squiggle path{fill:none;stroke:#eef2f7;stroke-width:7;
+        stroke-linecap:round;stroke-linejoin:round;
+        stroke-dasharray:1;stroke-dashoffset:1;
+        transition:stroke-dashoffset 1s cubic-bezier(.65,0,.35,1) .35s}
+  .corner h1.show .hl .squiggle path{stroke-dashoffset:0}
+
+  .corner .lead{margin-top:22px;font-size:clamp(14px,1.2vw,18px);line-height:1.6;
+        font-weight:400;color:#9aa0a8;max-width:36ch;
+        opacity:0;transform:translateY(58px);
+        transition:opacity 1.6s ease,transform 1.6s cubic-bezier(.22,1,.36,1)}
+  #copy-br .lead{margin-left:auto}   /* alinea el bloque de texto a la derecha */
+
+  .corner .show{opacity:1;transform:translateY(0)}
+
+  /* móvil / pantallas estrechas: apila para que no se solapen sobre la cabeza */
+  @media (max-width:760px){
+    #hero-title{top:5vh;width:92vw}
+    .corner{position:fixed;max-width:88vw;left:6vw;right:auto;text-align:left}
+    #copy-bl{bottom:26vh}
+    #copy-br{bottom:6vh;text-align:left}
+    #copy-br .lead{margin-left:0}
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    #hero-title h2{animation:none}
+  }
+</style>
+</head>
+<body>
+  <!-- FONDO: capas detrás del canvas 3D. Da profundidad/textura sin tocar el hero.
+       Orden (de atrás a delante): base con gradiente radial → charco de luz fría →
+       bloom rojo (puntuación) → grano → viñeta. -->
+  <div id="bg" aria-hidden="true">
+    <div class="bg-glow"></div>
+    <div class="bg-red"></div>
+    <div class="bg-grain"></div>
+    <div class="bg-vignette"></div>
+  </div>
+
+  <div id="stage"><canvas id="gl"></canvas></div>
+
+  <!-- 1) TÍTULO sobre la cabeza (1º en aparecer) — texto normal + círculo rojo a mano -->
+  <div id="hero-title">
+    <div class="ttl">Plan mensual de<br><span class="l2">Desarrollo artístico<svg class="ring" viewBox="0 0 300 120" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M240,22 C292,26 296,74 210,92 C150,104 55,102 18,74 C-6,52 34,24 120,18 C180,14 250,14 298,26"/></svg></span></div>
+  </div>
+
+  <!-- 2) caja abajo-izquierda (2ª en aparecer) -->
+  <div id="copy-bl" class="corner">
+    <p class="eyebrow">Un mes · Un equipo</p>
+    <h1>No necesitas otro beat.<br>Necesitas <span class="hl">un equipo.<svg class="squiggle" viewBox="0 0 300 40" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M5,27 C42,15 72,31 112,21 C152,12 182,31 222,19 C252,10 276,25 295,17"/></svg></span></h1>
+    <p class="lead">Un mes trabajando codo con codo con productores e ingenieros que se meten de verdad en tu proyecto. Lograremos darle forma a tu propio sonido.</p>
+  </div>
+
+  <!-- 3) caja abajo-derecha = 2ª propuesta de valor (3ª en aparecer) -->
+  <div id="copy-br" class="corner">
+    <p class="eyebrow">Un rumbo · Un criterio</p>
+    <h1>Tu música no necesita más intentos.<br>Necesita <span class="hl">dirección.<svg class="squiggle" viewBox="0 0 300 40" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M5,27 C42,15 72,31 112,21 C152,12 182,31 222,19 C252,10 276,25 295,17"/></svg></span></h1>
+    <p class="lead">Juntos ponemos rumbo a tu proyecto: cada decisión de producción, mezcla y referencias, empuja en la misma dirección. Dejas de caminar solo tema a tema y empezamos a construir tu identidad artística.</p>
+  </div>
+
+  <div class="track"></div>
+  <div id="hint">scroll</div>
+  <div id="loader">TSUKIBOYZ</div>
+
+  <!-- modo preview: ?reveal muestra el copy sin scroll (independiente del 3D) -->
+  <script>
+    if (location.search.includes('reveal')) {
+      var _t=document.getElementById('hero-title');
+      _t.style.opacity=1; _t.style.transform='translateX(-50%)';
+      document.querySelectorAll('.corner .eyebrow, .corner h1, .corner .lead')
+        .forEach(el=>{ el.classList.add('show');
+          el.style.transition='none'; el.style.opacity=1; el.style.transform='none'; });
+      document.querySelectorAll('.corner h1 .hl .squiggle path')
+        .forEach(p=>{ p.style.transition='none'; p.style.strokeDashoffset=0; });
+      var _r=document.querySelector('#hero-title .ring path');
+      if(_r){ _r.style.transition='none'; _r.style.strokeDashoffset=0; }
+      var _h=document.getElementById('hint'); if(_h) _h.style.opacity=0;
+      var _l=document.getElementById('loader'); if(_l){ _l.style.transition='none'; _l.style.opacity=0; _l.style.display='none'; }
+    }
+  </script>
+
+  <script type="importmap">
+  {"imports":{
+    "three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }}
+  </script>
+
+  <script type="module">
+  import * as THREE from 'three';
+  import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+  import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
+
+  const canvas = document.getElementById('gl');
+  // alpha:true → el canvas es transparente y deja ver el fondo (capas DOM #bg).
+  // La cabeza cromada NO cambia: el metal refleja scene.environment, no el fondo.
+  const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
+  renderer.setClearColor(0x000000, 0);
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.setSize(innerWidth, innerHeight);
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 0.92;
+
+  const scene = new THREE.Scene();
+  // sin fondo en la escena: el fondo lo pintan las capas DOM (#bg) detrás del canvas.
+  scene.background = null;
+
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.03).texture;
+
+  const camera = new THREE.PerspectiveCamera(32, innerWidth/innerHeight, 0.01, 100);
+  camera.position.set(0, 0, 4.6);
+
+  // encuadra la cabeza (medio ~0.95u) con margen, en horizontal y vertical.
+  // En móvil vertical la restricción es el ancho: aleja la cámara para no recortarla.
+  const SHRINK = 2.3;                            // cabeza a ~43% del tamaño anterior
+  function fitView(){
+    const half = 0.95 * 1.22 * SHRINK;           // extensión + margen (alejada)
+    const vt = Math.tan(THREE.MathUtils.degToRad(camera.fov)/2);
+    const distV = half / vt;
+    const distH = half / (vt * camera.aspect);
+    camera.position.z = Math.max(distV, distH);
+    camera.updateProjectionMatrix();
+  }
+
+  // luces: cromo limpio sobre negro, sin acento rojo
+  scene.add(new THREE.AmbientLight(0xffffff, 0.22));
+  const key = new THREE.DirectionalLight(0xdfe6ff, 1.7); key.position.set(2.5, 3, 4); scene.add(key);
+  const rim = new THREE.DirectionalLight(0xbfd0ff, 1.4); rim.position.set(-3.5, 0.5, -1.5); scene.add(rim);
+  const fill = new THREE.DirectionalLight(0x334155, 0.9); fill.position.set(-2, -1, 3); scene.add(fill);
+
+  // ---------------------------------------------------------------------------
+  // TORMENTA DE RAYOS ROJOS (estilo Stranger Things): plano a pantalla completa,
+  // detrás de la cabeza, dentro del MISMO canvas. Nubes por ruido fractal (FBM)
+  // que sólo se ven cuando un RAYO las ilumina (cada rayo = un trigger, no scroll).
+  // Entre rayos el plano es transparente → se ve el fondo de profundidad (#bg).
+  // ---------------------------------------------------------------------------
+  const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const STORM = 1.0;                                  // intensidad maestra de los rayos
+  const bgScene = new THREE.Scene();
+  const bgCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  const stormUniforms = {
+    uTime:    { value: 0 },
+    uFlash:   { value: 0 },                           // 0..1 intensidad del destello actual
+    uFlashPos:{ value: new THREE.Vector2(0.5, 0.68) },// dónde cae el rayo (uv)
+    uAspect:  { value: innerWidth / innerHeight }
+  };
+  const stormMat = new THREE.ShaderMaterial({
+    uniforms: stormUniforms,
+    transparent: true,
+    depthTest: false,
+    depthWrite: false,
+    blending: THREE.NormalBlending,
+    vertexShader: `
+      varying vec2 vUv;
+      void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }
+    `,
+    fragmentShader: `
+      precision highp float;
+      varying vec2 vUv;
+      uniform float uTime, uFlash, uAspect;
+      uniform vec2 uFlashPos;
+      float hash(vec2 p){ p=fract(p*vec2(123.34,345.45)); p+=dot(p,p+34.345); return fract(p.x*p.y); }
+      float noise(vec2 p){
+        vec2 i=floor(p), f=fract(p);
+        float a=hash(i), b=hash(i+vec2(1.,0.)), c=hash(i+vec2(0.,1.)), d=hash(i+vec2(1.,1.));
+        vec2 u=f*f*(3.-2.*f);
+        return mix(mix(a,b,u.x), mix(c,d,u.x), u.y);
+      }
+      float fbm(vec2 p){
+        float v=0., a=.5; mat2 m=mat2(1.6,1.2,-1.2,1.6);
+        for(int i=0;i<5;i++){ v+=a*noise(p); p=m*p; a*=.5; }
+        return v;
+      }
+      void main(){
+        vec2 uv=vUv;
+        vec2 p=vec2(uv.x*uAspect, uv.y);
+        float t=uTime*0.04;
+        // nubes que se agitan lentamente (domain warping)
+        vec2 q=p*2.6 + vec2(t*0.6, t*0.15);
+        float warp=fbm(q + fbm(q*0.5 + t*0.2)*1.4);
+        float density=smoothstep(0.30, 1.0, warp);
+        density*=smoothstep(0.04, 0.55, uv.y);        // protege la zona del copy (abajo)
+
+        // iluminación del rayo, localizada alrededor de uFlashPos
+        vec2 fp=vec2(uFlashPos.x*uAspect, uFlashPos.y);
+        float dist=distance(p, fp);
+        float atten=exp(-dist*1.7);
+        float lit=uFlash*(0.18 + atten);              // 0.18 = leve subida de todo el cielo
+        float glow=lit*(0.30 + 0.80*density);         // las nubes densas brillan más
+        float core=uFlash*pow(atten,2.5)*density;     // núcleo caliente cerca del impacto
+
+        vec3 deep=vec3(0.34,0.03,0.02);               // rojo profundo (sombra de nube)
+        vec3 red =vec3(0.671,0.208,0.188);            // #ab3530 (marca)
+        vec3 hot =vec3(1.0,0.60,0.34);                // núcleo caliente naranja-blanco
+        vec3 col=mix(deep, red, clamp(glow*1.4, 0., 1.));
+        col=mix(col, hot, clamp(core*1.3, 0., 1.));
+
+        float inten=glow + core*1.6;
+        float alpha=clamp(inten, 0., 1.);
+        gl_FragColor=vec4(col*alpha, alpha);          // premultiplicado (composita sobre #bg)
+      }
+    `
+  });
+  bgScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), stormMat));
+  renderer.autoClear = false;                         // renderizamos tormenta y cabeza a mano
+
+  // programador de rayos: ráfagas con parpadeo realista (trigger), no arrastre por scroll
+  let stormNext = 1.4;                                // instante del próximo rayo
+  let stormT0 = -10;                                  // instante en que empezó el rayo actual
+  function strikeEnv(dt){                             // envolvente de un rayo (dt = s desde su inicio)
+    if (dt < 0) return 0.0;
+    const a = Math.exp(-dt*6.5);                      // caída principal
+    const flick = 0.55 + 0.45*Math.sin(dt*55.0)*Math.exp(-dt*3.0); // parpadeo que se apaga
+    let v = a*flick;
+    if (dt > 0.10) v += 0.6*Math.exp(-(dt-0.10)*8.0);// segundo fogonazo (re-strike)
+    return Math.min(1.0, v*STORM);
+  }
+
+  // grupo raíz de la cabeza (orientado con el ratón)
+  const rig = new THREE.Group();
+  scene.add(rig);
+
+  // ---- carga del modelo ----
+  const loader = new GLTFLoader();
+  loader.load('assets/cabeza-opt.glb', (gltf)=>{
+    const head = gltf.scene;
+    const box = new THREE.Box3().setFromObject(head);
+    const c = box.getCenter(new THREE.Vector3());
+    const s = box.getSize(new THREE.Vector3());
+    head.position.sub(c);                       // centrar en el origen
+    const maxd = Math.max(s.x, s.y, s.z);
+    const scale = 1.9 / maxd;                    // normalizar tamaño
+    head.scale.setScalar(scale);
+    rig.add(head);
+    fitView();
+    document.getElementById('loader').classList.add('hide');
+  }, undefined, (err)=>{ console.error('GLB error', err); });
+
+  // ---- interacción: scroll + parallax de ratón ----
+  let scrollN = 0;         // 0..1 según scroll
+  const track = document.querySelector('.track');
+  const heroTitle = document.getElementById('hero-title');
+  // caja 2 (abajo-izq)
+  const blEy = document.querySelector('#copy-bl .eyebrow');
+  const blH  = document.querySelector('#copy-bl h1');
+  const blP  = document.querySelector('#copy-bl .lead');
+  // caja 3 (abajo-der)
+  const brEy = document.querySelector('#copy-br .eyebrow');
+  const brH  = document.querySelector('#copy-br h1');
+  const brP  = document.querySelector('#copy-br .lead');
+  const REVEAL = location.search.includes('reveal');
+  const AT = new URLSearchParams(location.search).get('at');   // fija scroll para pruebas/headless
+  const FLASH = new URLSearchParams(location.search).get('flash'); // congela un rayo para inspeccionar/afinar
+  const clamp = (v,a,b)=>Math.min(b,Math.max(a,v));
+
+  function onScroll(){
+    const max = track.offsetHeight - innerHeight;
+    scrollN = max>0 ? clamp(scrollY / max, 0, 1) : 0;
+    if (AT !== null) scrollN = clamp(parseFloat(AT), 0, 1);
+    document.getElementById('hint').style.opacity = scrollN>0.02 ? 0 : 1;
+    if (REVEAL) return;   // en modo proof todo queda forzado visible por el script de arriba
+
+    // 1º) TÍTULO: entra SUAVE (transición CSS, igual que las cajas) y luego se va arriba.
+    //    Se conmutan clases .in/.out en vez de scrubbear por scroll → sin tirones.
+    // TÍTULO + su círculo rojo (trigger): al entrar en .in el CSS dibuja el óvalo de una.
+    heroTitle.classList.toggle('in',  scrollN > 0.06 && scrollN < 0.44);
+    heroTitle.classList.toggle('out', scrollN >= 0.44);
+
+    // 2º y 3º) CAJAS: emergen desde abajo cuando el título empieza a irse (escalonadas)
+    blEy.classList.toggle('show', scrollN > 0.46);
+    blH .classList.toggle('show', scrollN > 0.50);
+    blP .classList.toggle('show', scrollN > 0.58);
+    brEy.classList.toggle('show', scrollN > 0.56);
+    brH .classList.toggle('show', scrollN > 0.60);
+    brP .classList.toggle('show', scrollN > 0.68);
+  }
+  addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+
+  let mx=0, my=0, tmx=0, tmy=0;
+  addEventListener('pointermove', e=>{
+    tmx = (e.clientX/innerWidth  - 0.5);
+    tmy = (e.clientY/innerHeight - 0.5);
+  });
+
+  addEventListener('resize', ()=>{
+    camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth, innerHeight);
+    stormUniforms.uAspect.value = innerWidth/innerHeight;
+    fitView();
+  });
+
+  // ---- loop ----
+  // la cabeza APUNTA al cursor (lookAt): la cara gira para mirarlo de verdad,
+  // con rango horizontal y vertical marcado. Sin rotación por scroll.
+  const REACH = 2.2;                              // cuán agudo es el ángulo de mirada (mayor = más giro)
+  const target = new THREE.Vector3();
+  const clock = new THREE.Clock();
+
+  // recorrido vertical de la cabeza en unidades de mundo:
+  // al entrar (scroll 0) está BAJA para dejar hueco al título; con el scroll SUBE.
+  const HEAD_Y_LOW = -0.85, HEAD_Y_HIGH = 0.85;
+  const easeIO = t => t<0.5 ? 2*t*t : 1-Math.pow(-2*t+2,2)/2;
+  function headY(n){
+    const t = clamp((n-0.30)/0.55, 0, 1);         // empieza a subir a partir de ~30% del scroll
+    return HEAD_Y_LOW + (HEAD_Y_HIGH-HEAD_Y_LOW)*easeIO(t);
+  }
+  let headYs = HEAD_Y_LOW;                         // valor suavizado
+
+  function tick(){
+    const t = clock.getElapsedTime();
+
+    // TORMENTA: nubes a la deriva + rayos rojos por ráfagas (trigger).
+    stormUniforms.uTime.value = REDUCE ? 0.0 : t;
+    if (FLASH !== null){                              // depuración: rayo fijo y centrado
+      stormUniforms.uFlash.value = parseFloat(FLASH);
+      stormUniforms.uFlashPos.value.set(0.5, 0.62);
+    } else if (!REDUCE){
+      if (t > stormNext){                            // dispara un rayo nuevo
+        stormT0 = t;
+        stormUniforms.uFlashPos.value.set(0.15 + Math.random()*0.70,
+                                          0.48 + Math.random()*0.42);
+        // a veces réplica rápida, casi siempre una pausa larga (cielo a oscuras)
+        stormNext = t + (Math.random()<0.3 ? 0.22 + Math.random()*0.35
+                                           : 2.6 + Math.random()*4.2);
+      }
+      stormUniforms.uFlash.value = strikeEnv(t - stormT0);
+    } else {
+      stormUniforms.uFlash.value = 0.05;             // hint estático, sin parpadeo
+    }
+
+    mx += (tmx-mx)*0.08; my += (tmy-my)*0.08;    // suavizado del ratón
+    headYs += (headY(scrollN)-headYs)*0.07;      // suavizado del desplazamiento vertical (más suave)
+
+    // posición vertical (recorrido por scroll) + respiración muy sutil. X siempre 0 (centrada).
+    rig.position.y = headYs + Math.sin(t*0.8)*0.02;
+
+    // punto objetivo en el plano de la cámara, desplazado por el cursor.
+    // pantalla derecha -> +X, pantalla arriba -> +Y (cara sube). Se suma la Y de la cabeza
+    // para que la mirada neutra siga siendo al frente en cualquier altura.
+    const z = camera.position.z;
+    target.set(mx * z * REACH, -my * z * REACH + rig.position.y, z);
+    rig.lookAt(target);
+
+    // dos pasadas: 1) tormenta al fondo (transparente entre rayos), 2) cabeza delante
+    renderer.clear();
+    renderer.render(bgScene, bgCamera);
+    renderer.clearDepth();
+    renderer.render(scene, camera);
+    requestAnimationFrame(tick);
+  }
+  tick();
+  </script>
+</body>
+</html>

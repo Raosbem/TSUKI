@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TSUKIBOYZ</title>
+  <style>
+    :root{
+      --negro:#000;
+      --logo: url("assets/logo-hero.png");
+    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{background:var(--negro);color:#fff;font-family:-apple-system,"Helvetica Neue",Arial,sans-serif;overflow-x:hidden}
+
+    /* pista de scroll: da altura para poder scrollear y animar */
+    .track{height:320vh;position:relative;z-index:2}
+
+    /* escenario fijo a pantalla completa */
+    .stage{
+      position:fixed;inset:0;z-index:0;
+      display:flex;align-items:center;justify-content:center;
+      perspective:1400px;
+      overflow:hidden;
+      background:
+        radial-gradient(120% 90% at 50% 42%, #0b0c10 0%, #050506 45%, #000 78%);
+    }
+
+    /* halo de foco detrás de la cabeza (profundidad) */
+    .halo{
+      position:absolute;width:70vmin;height:70vmin;border-radius:50%;
+      background:radial-gradient(circle, rgba(120,140,180,.16) 0%, rgba(60,70,90,.06) 40%, transparent 70%);
+      filter:blur(10px);
+      transform:translateZ(-160px);
+      pointer-events:none;
+    }
+
+    /* la carta que se inclina en 3D (contiene todo lo pegado al metal) */
+    .card{
+      position:relative;
+      width:min(90vmin, 860px);
+      height:min(90vmin, 860px);
+      transform-style:preserve-3d;
+      will-change:transform;
+    }
+
+    /* capas que comparten exactamente la caja del logo */
+    .layer{position:absolute;inset:0;background-size:contain;background-position:center;background-repeat:no-repeat}
+
+    /* 1) el logo real */
+    .metal{
+      background-image:var(--logo);
+      filter:drop-shadow(0 30px 60px rgba(0,0,0,.75));
+    }
+
+    /* 2) barrido de luz especular, recortado a la forma del metal */
+    .sweep{
+      -webkit-mask-image:var(--logo);        mask-image:var(--logo);
+      -webkit-mask-size:contain;             mask-size:contain;
+      -webkit-mask-position:center;          mask-position:center;
+      -webkit-mask-repeat:no-repeat;         mask-repeat:no-repeat;
+      background:linear-gradient(112deg,
+        transparent 38%,
+        rgba(255,255,255,.0) 44%,
+        rgba(255,255,255,.55) 50%,
+        rgba(255,255,255,.0) 56%,
+        transparent 62%);
+      background-size:280% 280%;
+      background-position:120% 0%;
+      mix-blend-mode:screen;
+      opacity:.9;
+    }
+    /* 3) sheen base: un leve realce cenital fijo, también recortado al metal */
+    .sheen{
+      -webkit-mask-image:var(--logo);        mask-image:var(--logo);
+      -webkit-mask-size:contain;             mask-size:contain;
+      -webkit-mask-position:center;          mask-position:center;
+      -webkit-mask-repeat:no-repeat;         mask-repeat:no-repeat;
+      background:linear-gradient(180deg, rgba(210,225,255,.28) 0%, transparent 42%);
+      mix-blend-mode:screen;
+    }
+
+    /* 4) ojos: se encienden en rojo con el scroll */
+    .eye{
+      position:absolute;width:16%;height:11%;border-radius:50%;
+      mix-blend-mode:screen;
+      filter:blur(6px);
+      opacity:0;
+      background:radial-gradient(circle at 50% 50%,
+        rgba(255,70,55,1) 0%,
+        rgba(255,12,0,.9) 34%,
+        rgba(190,0,0,.35) 60%,
+        transparent 72%);
+    }
+    .eyeL{left:22.5%;top:47.5%}
+    .eyeR{left:61.5%;top:48.5%}
+    /* bloom rojo grande de ambiente cuando ya está "despierta" */
+    .aura{
+      position:absolute;inset:0;pointer-events:none;
+      background:radial-gradient(35% 26% at 46% 55%, rgba(255,20,10,.0), transparent 60%);
+      mix-blend-mode:screen;opacity:0;
+      transition:opacity .1s linear;
+    }
+
+    /* interfaz mínima */
+    .marca{
+      position:fixed;top:34px;left:50%;transform:translateX(-50%);
+      letter-spacing:.55em;font-size:13px;font-weight:600;text-transform:uppercase;
+      opacity:.85;padding-left:.55em;z-index:4;
+    }
+    .scroll-hint{
+      position:fixed;bottom:30px;left:50%;transform:translateX(-50%);
+      display:flex;flex-direction:column;align-items:center;gap:10px;
+      opacity:.5;letter-spacing:.35em;font-size:11px;text-transform:uppercase;z-index:4;
+    }
+    .scroll-hint .linea{width:1px;height:44px;background:linear-gradient(to bottom,rgba(255,255,255,.8),transparent)}
+
+    .cargando{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:9;
+      background:#000;letter-spacing:.4em;font-size:11px;text-transform:uppercase;color:rgba(255,255,255,.5);
+      transition:opacity .8s ease}
+    .cargando.oculto{opacity:0;pointer-events:none}
+
+    @media (prefers-reduced-motion:reduce){
+      .sweep{background-position:60% 0%}
+    }
+  </style>
+</head>
+<body>
+
+  <div class="cargando" id="cargando">Cargando</div>
+
+  <div class="stage">
+    <div class="halo"></div>
+    <div class="card" id="card">
+      <div class="layer metal"></div>
+      <div class="layer sheen"></div>
+      <div class="layer sweep" id="sweep"></div>
+      <div class="eye eyeL" id="eyeL"></div>
+      <div class="eye eyeR" id="eyeR"></div>
+    </div>
+    <div class="aura" id="aura"></div>
+  </div>
+
+  <div class="marca">TSUKIBOYZ</div>
+  <div class="scroll-hint" id="hint">
+    <span>Scroll</span>
+    <span class="linea"></span>
+  </div>
+
+  <div class="track"></div>
+
+  <script>
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const card = document.getElementById('card');
+    const sweep = document.getElementById('sweep');
+    const eyeL = document.getElementById('eyeL');
+    const eyeR = document.getElementById('eyeR');
+    const aura = document.getElementById('aura');
+    const hint = document.getElementById('hint');
+
+    // precargar el logo y quitar el "Cargando"
+    const pre = new Image();
+    pre.onload = () => document.getElementById('cargando').classList.add('oculto');
+    pre.src = 'assets/logo-hero.png';
+
+    let progreso = 0;      // 0..1 con el scroll
+    let mx = 0, my = 0;    // ratón normalizado -1..1
+    let tmx = 0, tmy = 0;  // suavizado
+
+    function calcProgreso(){
+      const max = document.documentElement.scrollHeight - innerHeight;
+      progreso = max > 0 ? Math.min(1, Math.max(0, scrollY / max)) : 0;
+    }
+    addEventListener('scroll', calcProgreso, {passive:true});
+    calcProgreso();
+
+    if(!reduce){
+      addEventListener('pointermove', e => {
+        mx = (e.clientX / innerWidth) * 2 - 1;
+        my = (e.clientY / innerHeight) * 2 - 1;
+      }, {passive:true});
+    }
+
+    function frame(){
+      requestAnimationFrame(frame);
+
+      // suavizar ratón
+      tmx += (mx - tmx) * 0.06;
+      tmy += (my - tmy) * 0.06;
+
+      // ---- tilt 3D: ratón + un leve vaivén ligado al scroll ----
+      const swayY = Math.sin(progreso * Math.PI * 2) * 10;   // ±10° de vaivén al bajar
+      const rotY = tmx * 12 + swayY;
+      const rotX = -tmy * 9;
+      const zoom = 1 + progreso * 0.06;                      // acercamiento sutil
+      const lift = -progreso * 3;                            // se asienta
+      card.style.transform =
+        `translateY(${lift}vh) scale(${zoom}) rotateX(${rotX}deg) rotateY(${rotY}deg)`;
+
+      // ---- barrido de luz: recorre el metal con el scroll ----
+      const sweepPos = 120 - progreso * 170;                 // de 120% a -50%
+      sweep.style.backgroundPosition = `${sweepPos}% 0%`;
+
+      // ---- ojos: encienden en rojo ----
+      const enc = Math.min(1, progreso / 0.85);
+      const eyeOp = enc * enc;
+      eyeL.style.opacity = eyeOp;
+      eyeR.style.opacity = eyeOp;
+      aura.style.opacity = eyeOp * 0.6;
+
+      // pista de scroll se desvanece
+      hint.style.opacity = Math.max(0, 0.5 - progreso * 5);
+    }
+    frame();
+  </script>
+
+</body>
+</html>

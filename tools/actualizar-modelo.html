@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="es"><meta charset="utf-8"><title>Actualizar logo local</title>
+<h1>Actualizar logo local</h1>
+<p>Selecciona assets/cabeza-opt.glb. Guarda la descarga en assets/cabeza-opt.embedded.js y reemplaza el archivo anterior.</p>
+<input type="file" accept=".glb"><p role="status" id="status"></p>
+<script>
+document.querySelector('input').onchange = async function(){
+  const file = this.files[0];
+  if (!file) return;
+  const status = document.getElementById('status');
+  try {
+    const buffer = await file.arrayBuffer();
+    const header = new DataView(buffer);
+    if (buffer.byteLength < 20 || header.getUint32(0,true) !== 0x46546c67 ||
+        header.getUint32(4,true) !== 2 || header.getUint32(8,true) !== buffer.byteLength)
+      throw new Error('Selecciona un archivo GLB 2 valido.');
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    for (let i=0;i<bytes.length;i+=32768)
+      binary += String.fromCharCode.apply(null,bytes.subarray(i,i+32768));
+    const blob = new Blob(['window.TSUKI_MODEL_BASE64 = ', JSON.stringify(btoa(binary)), ';\n'], {type:'text/javascript'});
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url; link.download = 'cabeza-opt.embedded.js'; link.textContent = 'Descargar modelo local';
+    status.replaceChildren(link); link.click();
+    setTimeout(() => URL.revokeObjectURL(url),60000);
+  } catch(error){ status.textContent = error.message; }
+};
+</script></html>

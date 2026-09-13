@@ -1,0 +1,165 @@
+/* Presentation only: independent of the hero scroll and 3D logic. */
+:root{--tsuki-red:#c7463f;--tsuki-silver:#ece9e4}
+::selection{background:#ab3530;color:#fff}
+#testimonios,#catalogo{scroll-margin-top:90px}
+.section-label{font-size:10px;font-weight:700;letter-spacing:.2em;line-height:1.6;color:#c77d76;margin-bottom:24px}
+#testimonios{padding-top:clamp(90px,14vh,160px);padding-bottom:80px;background:radial-gradient(ellipse at 50% 45%,#170c0c 0%,#000 68%)}
+.tst-head{max-width:1060px;margin-bottom:56px}
+.tst-head h2,.cat-head h2{font-weight:600;letter-spacing:-.045em;line-height:1.14;font-size:clamp(27px,3.5vw,48px);color:var(--tsuki-silver)}
+.tst-head .sub,.cat-head .sub{line-height:1.8;color:#a6a3a3;font-size:12px}
+.tst-card{background:linear-gradient(145deg,#161414,#0b0a0a);border-radius:16px;padding:26px;box-shadow:0 18px 45px #0005}
+.tst-av{width:62px;height:62px;border:1px solid #ffffff30}
+.tst-quote p{line-height:1.85}
+.tst-card:hover,.tst-card:focus-visible{border-color:#c7463f80}
+#catalogo{padding:100px 6vw 130px;background:radial-gradient(ellipse at 100% 35%,#150b0b 0%,#000 58%)}
+.cat-head{max-width:1200px;text-align:left;margin-bottom:52px;padding-top:36px;border-top:1px solid #ffffff20}
+.cat-head h2{max-width:850px}
+.cat-head .guill{display:none}
+.cat-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}
+.cover:first-child{grid-column:span 2;grid-row:span 2}
+.cover{border-radius:5px;isolation:isolate}
+.cover .scrim{opacity:1;background:linear-gradient(180deg,transparent 30%,#0003 55%,#000d 100%)}
+.cover .info{inset:auto 0 0;align-items:flex-start;text-align:left;padding:20px;opacity:1;transform:none;gap:6px}
+.cover .info .t{font-size:clamp(15px,1.5vw,21px);color:#fff}
+.cover:first-child .info{padding:30px}
+.cover:first-child .info .t{font-size:clamp(26px,3.1vw,44px)}
+.cover .info .artists{font-size:12px;line-height:1.6}
+.cover .info .artists a.ig{border-bottom-color:transparent}
+.cover img{filter:brightness(.92) saturate(.9)}
+.cover:hover .scrim,.cover:focus-within .scrim{opacity:1}
+.cover:hover::after,.cover:focus-within::after{box-shadow:inset 0 0 0 1px #c7463f,inset 0 -40px 60px -40px #c7463f}
+.cover:focus-within{outline:2px solid var(--tsuki-red);outline-offset:4px}
+.cover:focus-within img{filter:brightness(1);transform:scale(1.04)}
+.cover-play{position:absolute;right:16px;top:16px;z-index:3;pointer-events:none;display:grid;place-items:center;width:42px;height:42px;border-radius:50%;background:#151111b3;border:1px solid #ffffff55;color:#fff;font-size:24px;opacity:0;transform:translateY(5px);transition:opacity .25s,transform .25s,background .25s}
+.cover:hover .cover-play,.cover:focus-within .cover-play{opacity:1;transform:none;background:#ab3530}
+#topmenu .tm-dropdown{padding:10px;background:#100d0df5;border:1px solid #ffffff24;border-radius:16px;box-shadow:0 20px 65px #0009;backdrop-filter:blur(18px)}
+#topmenu .tm-dropdown a{padding:14px 18px;border-radius:8px;transition:background .2s,color .2s}
+#topmenu .tm-dropdown a:hover,#topmenu .tm-dropdown a:focus-visible{background:#ab353026;color:#fff}
+.site-footer{position:relative;z-index:10;overflow:hidden;padding:64px 6vw 26px;background:radial-gradient(ellipse at 50% 110%,#3c1111 0%,#100909 45%,#080707 75%);border-top:1px solid #ffffff1c}
+.footer-top,.footer-bottom{max-width:1400px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:24px}
+.footer-top .section-label{margin:0}
+.footer-contact{display:inline-flex;align-items:center;justify-content:space-between;gap:30px;min-height:56px;padding:16px 24px;border:1px solid #c7463f80;border-radius:999px;color:#f1e9e6;text-decoration:none;font-size:14px;background:#ab353018;transition:background .25s,transform .25s}
+.footer-contact span{font-size:24px}
+.footer-contact:hover{background:#ab3530;transform:translateY(-3px)}
+.footer-wordmark{margin:60px auto 40px;max-width:1400px;font-family:Arial,Helvetica,sans-serif;font-size:clamp(44px,13.8vw,210px);font-weight:900;line-height:.95;letter-spacing:-.075em;white-space:nowrap;color:#e7e3de}
+.footer-wordmark span{color:var(--tsuki-red)}
+.footer-bottom{border-top:1px solid #ffffff20;padding-top:24px;color:#a9a09e;font-size:10px;letter-spacing:.09em;line-height:1.8}
+.footer-bottom nav{display:flex;gap:24px;flex-wrap:wrap}
+.footer-bottom a{display:inline-flex;align-items:center;min-height:44px;color:#c7bdb9;text-decoration:none}
+.footer-bottom a:hover{color:#fff}
+.site-footer a:focus-visible{outline:2px solid var(--tsuki-red);outline-offset:5px}
+@media(max-width:760px){
+  #testimonios{padding-top:90px;padding-bottom:48px}
+  .tst-head{padding:0 6vw;margin-bottom:36px;text-align:left}
+  .tst-card{padding:22px;width:84vw}
+  #catalogo{padding:56px 6vw 72px}
+  .cat-head{padding-top:28px;margin-bottom:32px}
+  .cat-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .cover:first-child{grid-row:auto}
+  .cover .info{padding:12px;gap:4px}
+  .cover .info .t{font-size:14px}
+  .cover .info .artists{font-size:11px}
+  .cover:first-child .info{padding:22px}
+  .cover-play{width:34px;height:34px;right:12px;top:12px;font-size:20px}
+  .section-label{font-size:9px;letter-spacing:.15em;margin-bottom:18px}
+  .site-footer{padding-top:40px}
+  .footer-top,.footer-bottom{align-items:flex-start;flex-direction:column;gap:20px}
+  .footer-contact{width:100%}
+  .footer-wordmark{margin:44px 0 28px}
+  .footer-bottom nav{gap:24px}
+}
+@media(hover:none){.cover-play{opacity:1;transform:none}.cover .info .artists a.ig{display:inline-block;padding:4px 0}}
+@media(prefers-reduced-motion:reduce){
+  .cover img,.cover-play,.footer-contact{transition:none}
+  .cover:hover img,.cover:focus-within img,.footer-contact:hover{transform:none}
+}
+
+/* Second art-direction pass. Previous version: version-anterior.html. */
+@font-face{font-family:Tsuki Display;src:url("fonts/BarlowCondensed-Bold.ttf") format("truetype");font-weight:700;font-style:normal;font-display:swap}
+:root{--tsuki-display:"Tsuki Display","Arial Narrow",Arial,sans-serif}
+.tst-head,.cat-head{max-width:1200px;text-align:left;padding-left:0;padding-right:0;margin-left:auto;margin-right:auto}
+.tst-head{width:88%;position:relative;padding-top:32px;border-top:1px solid #ffffff20}
+.tst-head h2,.cat-head h2{font-family:var(--tsuki-display);font-weight:700;font-size:clamp(76px,10vw,144px);line-height:.84;letter-spacing:-.025em;text-transform:uppercase;margin:32px 0}
+.tst-head h2 span,.cat-head h2 span{color:#a8453d}
+.tst-head .sub,.cat-head .sub{font-size:14px;line-height:1.8;max-width:460px;color:#aba5a2}
+.section-label,.catalog-instruction,.track-number,.tst-position{font-family:"Courier New",monospace;font-weight:400;letter-spacing:.14em}
+.section-label{display:flex;align-items:center;gap:12px;color:#bca9a3}
+.section-label::before{content:"";width:6px;height:6px;background:var(--tsuki-red);flex-shrink:0}
+.catalog-instruction{display:inline-block;margin-top:18px;font-size:10px;color:#d5c9c3}
+#testimonios{padding-bottom:76px}
+.tst-controls{max-width:1200px;width:88%;margin:0 auto 22px;display:flex;align-items:center;justify-content:flex-end;gap:10px}
+.tst-position{margin-right:16px;font-size:12px;color:#bdaea7}
+.tst-controls button{display:grid;place-items:center;width:48px;height:48px;border:1px solid #ffffff35;border-radius:50%;background:transparent;color:#eee5e0;font-size:22px;cursor:pointer;transition:background .2s,border-color .2s}
+.tst-controls button:hover:not(:disabled){background:#ab3530;border-color:#ab3530}
+.tst-controls button:disabled{opacity:.3;cursor:default}
+.tst-controls button:focus-visible,.tst-row:focus-visible{outline:2px solid var(--tsuki-red);outline-offset:4px}
+#testimonios .tst-row{overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scroll-padding-left:max(6vw,calc((100vw - 1200px)/2));scrollbar-width:none;padding:6px max(6vw,calc((100vw - 1200px)/2)) 24px}
+#testimonios .tst-row::-webkit-scrollbar{display:none}
+#testimonios .tst-row::before,#testimonios .tst-row::after{display:none}
+#testimonios .tst-track{animation:none;transform:none;will-change:auto;gap:24px;align-items:stretch}
+#testimonios .tst-track::after{content:"";flex:0 0 max(0px,calc(100vw - 2 * max(6vw,calc((100vw - 1200px)/2)) - min(640px,64vw) - 24px))}
+#testimonios .tst-card{width:min(640px,64vw);padding:36px;border-radius:3px;background:#100e0e;scroll-snap-align:start;border-color:#ffffff1a;box-shadow:none}
+#testimonios .tst-card.is-current{border-color:#b45a496e;background:linear-gradient(140deg,#211514,#100e0e 75%)}
+.tst-av{width:76px;height:76px;border-radius:4px;filter:saturate(.7)}
+.tst-name{font-size:21px;border-bottom:0}
+.tst-role{margin-top:5px;font-size:10px}
+.tst-stars{font-size:11px;letter-spacing:3px}
+.tst-quote{margin-top:32px;max-height:190px}
+.tst-quote p{font-size:17px;line-height:1.8;color:#d3ccc7}
+.tst-quote::after{background:linear-gradient(180deg,transparent,#100e0e)}
+.tst-card::after{content:"LEER EXPERIENCIA +";display:block;margin-top:22px;font:10px "Courier New",monospace;letter-spacing:.13em;color:#bb9d92}
+.tst-card.open::after{content:"CERRAR EXPERIENCIA \2212"}
+#testimonios .tst-card.open .tst-quote{max-height:none}
+.track-number{position:absolute;left:18px;top:18px;color:#fff;font-size:9px;z-index:3;pointer-events:none;text-shadow:0 1px 8px #000;background:#0007;padding:7px 9px;border:1px solid #ffffff26}
+.cover .info .artists{color:#c7b8af}
+.cover{border-radius:2px}
+.cover-play{border-radius:50%;width:44px;height:44px}
+#topmenu .tm-btn{letter-spacing:.11em}
+#topmenu .tm-dropdown{border-radius:4px}
+#topmenu .tm-dropdown a{border-radius:2px}
+.footer-contact{border-radius:4px}
+.footer-wordmark{font-family:var(--tsuki-display);font-size:clamp(64px,19vw,280px);letter-spacing:-.025em;font-weight:700}
+@media(min-width:1100px){
+ .tst-head .sub,.cat-head .sub{position:absolute;right:0;bottom:0;max-width:330px}
+ .cat-head{position:relative}
+}
+@media(max-width:760px){
+ .tst-head h2,.cat-head h2{font-size:clamp(64px,18vw,108px);margin:26px 0;line-height:.88}
+ .tst-head .sub,.cat-head .sub{font-size:13px}
+ .tst-head{width:88%;margin-bottom:24px}
+ .tst-controls{margin-bottom:16px}
+ #testimonios .tst-card{width:84vw;padding:24px}
+ #testimonios .tst-track{gap:16px}
+ #testimonios .tst-track::after{flex-basis:calc(4vw - 16px)}
+ .tst-av{width:56px;height:56px}
+ .tst-name{font-size:18px}
+ .tst-stars{font-size:9px;letter-spacing:1px}
+ .tst-quote p{font-size:15px;line-height:1.85}
+ .tst-quote{margin-top:24px;max-height:170px}
+ .track-number{top:10px;left:10px;font-size:8px;padding:5px}
+ .cover-play{width:36px;height:36px;top:10px;right:10px}
+ .footer-wordmark{font-size:19vw}
+}
+@media(prefers-reduced-motion:reduce){
+ .tst-controls button{transition:none}
+ .tst-quote{max-height:none}
+}
+
+/* Visible artist links and navigation above page sections. */
+#topmenu{z-index:30}
+#loader{z-index:40}
+#topmenu a.tm-btn{text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+#topmenu .tm-active{cursor:pointer}
+.tm-compact{display:none}
+#topmenu .tm-dropdown{visibility:hidden}
+#topmenu .tm-dropdown.open{visibility:visible}
+.cover .info .artists a.ig{border-bottom:1px solid #ffffff35}
+.artist-instagram{display:block;margin-top:7px;font:10px "Courier New",monospace;letter-spacing:.03em;color:#c78774}
+.tst-name:focus-visible{outline:2px solid #c7463f;outline-offset:4px}
+@media(max-width:760px){
+ #topmenu{gap:6px;max-width:94vw;width:max-content}
+ #topmenu .tm-btn{font-size:9px;padding:11px 12px;letter-spacing:.06em;min-height:44px}
+ .tm-wide{display:none}.tm-compact{display:inline}
+ #topmenu .tm-dropdown{left:auto;right:0;transform:translateY(-8px)}
+ #topmenu .tm-dropdown.open{transform:translateY(0)}
+}
