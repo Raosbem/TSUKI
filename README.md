@@ -18,3 +18,5 @@ Three.js 0.160.0 y sus utilidades estan incluidas en assets/vendor/ con su licen
 Despues de sustituir assets/cabeza-opt.glb, abre tools/actualizar-modelo.html con doble clic, selecciona ese GLB y guarda la descarga como assets/cabeza-opt.embedded.js, reemplazando el anterior. No requiere instalar herramientas.
 
 serve.ps1 es una herramienta opcional anterior para Windows; no es necesaria para abrir el sitio.
+
+Sitio oficial de TsukiBoyz: produccion musical, mezcla y masterizacion.
