@@ -32,6 +32,9 @@
 .cover:focus-within img{filter:brightness(1);transform:scale(1.04)}
 .cover-play{position:absolute;right:16px;top:16px;z-index:3;pointer-events:none;display:grid;place-items:center;width:42px;height:42px;border-radius:50%;background:#151111b3;border:1px solid #ffffff55;color:#fff;font-size:24px;opacity:0;transform:translateY(5px);transition:opacity .25s,transform .25s,background .25s}
 .cover:hover .cover-play,.cover:focus-within .cover-play{opacity:1;transform:none;background:#ab3530}
+#topmenu .tm-dropdown{padding:10px;background:#100d0df5;border:1px solid #ffffff24;border-radius:16px;box-shadow:0 20px 65px #0009;backdrop-filter:blur(18px)}
+#topmenu .tm-dropdown a{padding:14px 18px;border-radius:8px;transition:background .2s,color .2s}
+#topmenu .tm-dropdown a:hover,#topmenu .tm-dropdown a:focus-visible{background:#ab353026;color:#fff}
 .site-footer{position:relative;z-index:10;overflow:hidden;padding:64px 6vw 26px;background:radial-gradient(ellipse at 50% 110%,#3c1111 0%,#100909 45%,#080707 75%);border-top:1px solid #ffffff1c}
 .footer-top,.footer-bottom{max-width:1400px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:24px}
 .footer-top .section-label{margin:0}
@@ -126,6 +129,8 @@ a.catalog-instruction:focus-visible{outline:2px solid var(--tsuki-red);outline-o
 .cover{border-radius:2px}
 .cover-play{border-radius:50%;width:44px;height:44px}
 #topmenu .tm-btn{letter-spacing:.11em}
+#topmenu .tm-dropdown{border-radius:4px}
+#topmenu .tm-dropdown a{border-radius:2px}
 .footer-contact{border-radius:4px}
 .footer-wordmark{font-family:var(--tsuki-display);font-size:clamp(64px,19vw,280px);letter-spacing:-.025em;font-weight:700}
 @media(min-width:1100px){
@@ -160,6 +165,8 @@ a.catalog-instruction:focus-visible{outline:2px solid var(--tsuki-red);outline-o
 #topmenu a.tm-btn{text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
 #topmenu .tm-active{cursor:pointer}
 .tm-compact{display:none}
+#topmenu .tm-dropdown{visibility:hidden}
+#topmenu .tm-dropdown.open{visibility:visible}
 .cover .info .artists a.ig{border-bottom:1px solid #ffffff35}
 .artist-instagram{display:block;margin-top:7px;font:10px "Courier New",monospace;letter-spacing:.03em;color:#c78774}
 .tst-name:focus-visible{outline:2px solid #c7463f;outline-offset:4px}
@@ -167,6 +174,8 @@ a.catalog-instruction:focus-visible{outline:2px solid var(--tsuki-red);outline-o
  #topmenu{gap:6px;max-width:94vw;width:max-content}
  #topmenu .tm-btn{font-size:9px;padding:11px 12px;letter-spacing:.06em;min-height:44px}
  .tm-wide{display:none}.tm-compact{display:inline}
+ #topmenu .tm-dropdown{left:auto;right:0;transform:translateY(-8px)}
+ #topmenu .tm-dropdown.open{transform:translateY(0)}
 }
 
 /* ================= PLAN: tarjeta de precio (hero -> aquí -> testimonios) =================
@@ -192,12 +201,11 @@ a.catalog-instruction:focus-visible{outline:2px solid var(--tsuki-red);outline-o
 .plan-head,.plan-card{position:relative;z-index:1}
 .plan-head{max-width:1200px;margin:0 auto 52px;text-align:left;
     padding-top:32px;border-top:1px solid #ffffff20}
-.plan-head h2,.ct-head h2{font-family:var(--tsuki-display);font-weight:700;
+.plan-head h2{font-family:var(--tsuki-display);font-weight:700;
     font-size:clamp(64px,9vw,128px);line-height:.86;letter-spacing:-.025em;
     text-transform:uppercase;color:var(--tsuki-silver);margin:28px 0}
-.plan-head h2 span,.ct-head h2 span{color:#a8453d}
-.plan-head .sub,.ct-head .sub{font-size:14px;line-height:1.8;max-width:460px;color:#aba5a2;margin-top:0}
-.plan-note{margin:26px 0 0;font-size:12px;letter-spacing:.02em;color:#8f8886}
+.plan-head h2 span{color:#a8453d}
+.plan-head .sub{font-size:14px;line-height:1.8;max-width:460px;color:#aba5a2;margin-top:0}
 
 .plan-card{max-width:900px;margin:0 auto;border:1px solid #ffffff1c;border-radius:20px;
     background:linear-gradient(150deg,#141010,#0a0909);
@@ -236,163 +244,4 @@ a.catalog-instruction:focus-visible{outline:2px solid var(--tsuki-red);outline-o
 }
 @media(prefers-reduced-motion:reduce){
   .plan-card{transition:none}
-}
-
-/* ================= CONTACTO: formulario + redes =================
-   Última sección antes del pie. Arranca en negro como el catálogo (mismo velo
-   que #plan) para que no se vea la costura de color al cambiar de sección. */
-html{scroll-behavior:smooth}
-@media(prefers-reduced-motion:reduce){ html{scroll-behavior:auto} }
-
-#contacto{position:relative;z-index:10;scroll-margin-top:90px;padding:110px 6vw 96px;
-    background:radial-gradient(ellipse at 50% 54%,#170c0c 0%,#000 74%)}
-#contacto::before{content:"";position:absolute;left:0;right:0;top:0;z-index:0;
-    height:clamp(220px,38vh,480px);pointer-events:none;
-    background:linear-gradient(180deg,#000 0%,#000 16%,rgba(0,0,0,.86) 42%,
-        rgba(0,0,0,.52) 66%,rgba(0,0,0,.2) 86%,rgba(0,0,0,0) 100%)}
-.ct-head{position:relative;z-index:1;max-width:1200px;margin:0 auto 52px;
-    padding-top:32px;border-top:1px solid #ffffff20}
-
-.ct-grid{position:relative;z-index:1;max-width:1200px;margin:0 auto;display:grid;
-    grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:26px;align-items:start}
-
-/* --- la tarjeta del formulario --- */
-.ct-form{border:1px solid #ffffff1c;border-radius:20px;padding:38px 36px 34px;
-    background:linear-gradient(150deg,#141010,#0a0909);box-shadow:0 30px 70px -30px #0009}
-.ct-note{margin:0 0 28px;font-size:12.5px;color:#948c89}
-.ct-note span{color:var(--tsuki-red)}
-.ct-row{display:grid;grid-template-columns:1fr 1fr;gap:22px}
-.ct-field{display:flex;flex-direction:column;gap:10px;margin-bottom:24px}
-.ct-field label{font-size:14px;font-weight:600;color:#e8e3e0}
-.ct-field label span{color:var(--tsuki-red)}
-.ct-field input,.ct-field select,.ct-field textarea{
-    width:100%;box-sizing:border-box;font:inherit;font-size:14px;color:#f1ece9;
-    background:#0c0a0a;border:1px solid #ffffff1f;border-radius:12px;padding:15px 16px;
-    transition:border-color .25s ease,box-shadow .25s ease,background .25s ease}
-.ct-field textarea{min-height:152px;line-height:1.6;resize:vertical}
-.ct-field input::placeholder,.ct-field textarea::placeholder{color:#6f6865}
-.ct-field select{appearance:none;-webkit-appearance:none;cursor:pointer;padding-right:44px;
-    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a79f9c' stroke-width='2' stroke-linecap='round'><path d='M6 9l6 6 6-6'/></svg>");
-    background-repeat:no-repeat;background-position:right 16px center;background-size:17px}
-.ct-field select:invalid{color:#6f6865}          /* mientras no se elige nada */
-.ct-field option{background:#131010;color:#f1ece9}
-.ct-field input:hover,.ct-field select:hover,.ct-field textarea:hover{border-color:#ffffff36}
-.ct-field input:focus,.ct-field select:focus,.ct-field textarea:focus{
-    outline:none;border-color:#c7463f;background:#110d0d;box-shadow:0 0 0 3px #ab353033}
-/* los campos que faltan solo se marcan DESPUÉS de intentar enviar */
-.ct-form.tocado input:invalid,.ct-form.tocado select:invalid,.ct-form.tocado textarea:invalid{
-    border-color:#c7463f99}
-
-.ct-consent{display:flex;align-items:flex-start;gap:13px;margin:4px 0 28px;cursor:pointer;
-    font-size:13.5px;line-height:1.6;color:#c2bbb8}
-.ct-consent input{flex:0 0 auto;width:20px;height:20px;margin:1px 0 0;accent-color:#ab3530;cursor:pointer}
-.ct-consent span span{color:var(--tsuki-red)}
-.ct-honey{position:absolute!important;left:-9999px!important;width:1px;height:1px;opacity:0;
-    padding:0;border:0}
-
-.ct-actions{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
-.ct-send{appearance:none;border:0;cursor:pointer;font:inherit;font-weight:700;font-size:14px;
-    color:#fff;background:#ab3530;border-radius:999px;padding:17px 30px;min-height:54px;
-    display:inline-flex;align-items:center;gap:12px;
-    box-shadow:0 16px 40px -16px rgba(171,53,48,.85);
-    transition:background .25s ease,transform .25s ease,box-shadow .25s ease}
-.ct-send:hover:not(:disabled){background:#c23d37;transform:translateY(-2px)}
-.ct-send:disabled{opacity:.5;cursor:default;transform:none}
-.ct-send:focus-visible{outline:2px solid #fff;outline-offset:3px}
-.ct-status{margin:0;font-size:13px;line-height:1.55;color:#b3aba8;flex:1 1 220px}
-.ct-status.ok{color:#93cf8d}
-.ct-status.err{color:#e28a84}
-.ct-status a{color:#f2ece9}
-
-/* --- columna derecha: redes + atajo de WhatsApp --- */
-.ct-side{display:flex;flex-direction:column;gap:22px}
-.ct-social{border-radius:20px;padding:34px 30px;
-    background:linear-gradient(135deg,#c2463f 0%,#ab3530 56%,#8e2a26 100%);
-    box-shadow:0 30px 70px -34px #000c}
-.ct-social-t{margin:0 0 24px;font-family:var(--tsuki-display);font-weight:700;
-    font-size:clamp(34px,3.4vw,46px);line-height:1;letter-spacing:-.02em;color:#180b0a}
-.ct-social-row{display:flex;gap:16px;flex-wrap:wrap}
-.ct-social-row a{width:62px;height:62px;border-radius:50%;display:grid;place-items:center;
-    background:rgba(18,7,7,.22);color:#170a09;
-    transition:background .25s ease,color .25s ease,transform .25s ease}
-.ct-social-row a:hover{background:#140808;color:#f3e9e6;transform:translateY(-3px)}
-.ct-social-row a:focus-visible{outline:3px solid #170a09;outline-offset:3px}
-.ct-social-row svg{width:26px;height:26px}
-
-.ct-wa{display:flex;align-items:center;justify-content:space-between;gap:20px;
-    border:1px solid #ffffff1c;border-radius:20px;padding:26px 28px;text-decoration:none;
-    background:linear-gradient(150deg,#141010,#0a0909);color:#e9e3e0;
-    transition:border-color .25s ease,transform .25s ease}
-.ct-wa:hover{border-color:#c7463f80;transform:translateY(-3px)}
-.ct-wa b{display:block;font-size:16px;margin-bottom:7px;color:#f1ece9}
-.ct-wa .ct-wa-txt span{font-size:13px;line-height:1.55;color:#a9a19e}
-.ct-wa svg{width:34px;height:34px;flex:0 0 auto;fill:#ab3530}
-
-@media(max-width:1040px){
-  .ct-grid{grid-template-columns:1fr}
-  .ct-social-row{gap:14px}
-}
-@media(max-width:700px){
-  #contacto{padding:72px 6vw 64px}
-  .ct-head{margin-bottom:32px;padding-top:28px}
-  .ct-head h2{font-size:clamp(54px,16vw,96px);margin:22px 0}
-  .ct-form{padding:26px 20px 24px}
-  .ct-row{grid-template-columns:1fr;gap:0}
-  .ct-social{padding:26px 22px}
-  .ct-social-row a{width:56px;height:56px}
-  .ct-wa{padding:22px 20px;gap:14px}
-}
-@media(prefers-reduced-motion:reduce){
-  .ct-send,.ct-wa,.ct-social-row a{transition:none}
-  .ct-send:hover:not(:disabled),.ct-wa:hover,.ct-social-row a:hover{transform:none}
-}
-
-/* ================= REPRODUCTOR (barra fija abajo) =================
-   Sale al pulsar el play de una portada y lleva dentro el reproductor oficial
-   de Spotify, que ya trae su play/pausa y su barra para adelantar. */
-.sp-player{position:fixed;left:0;right:0;bottom:0;z-index:35;
-    background:linear-gradient(180deg,#120e0ef2,#0a0808fa);
-    border-top:1px solid #ffffff1f;backdrop-filter:blur(14px);
-    -webkit-backdrop-filter:blur(14px);box-shadow:0 -18px 46px -22px #000}
-/* el reproductor pegado a la izquierda de la pantalla y la X al extremo
-   derecho: la barra ocupa todo el ancho, sin caja centrada. */
-.sp-bar{display:grid;grid-template-columns:minmax(0,1fr) auto;
-    align-items:center;gap:18px;padding:10px max(4vw,16px)}
-.sp-embed{min-width:0;max-width:520px}
-.sp-embed iframe{display:block;width:100%;height:72px;border:0;border-radius:12px}
-.sp-close{appearance:none;border:1px solid #ffffff30;background:transparent;color:#e6dedb;
-    width:40px;height:40px;border-radius:50%;cursor:pointer;font-size:15px;line-height:1;
-    display:grid;place-items:center;transition:background .2s,border-color .2s}
-.sp-close:hover{background:#ab3530;border-color:#ab3530;color:#fff}
-.sp-close:focus-visible{outline:2px solid var(--tsuki-red);outline-offset:3px}
-/* el pie no se queda debajo de la barra */
-body.sp-abierto .site-footer{padding-bottom:118px}
-
-/* el ↗ decorativo pasa a ser un botón de verdad, centrado en la portada:
-   es lo único que se pulsa, la portada ya no lleva a Spotify */
-.cover-play{appearance:none;-webkit-appearance:none;padding:0;cursor:pointer;
-    pointer-events:auto;border:1px solid #ffffff55;
-    right:auto;bottom:auto;left:50%;top:50%;width:62px;height:62px;
-    transform:translate(-50%,-50%) scale(.86)}
-.cover-play svg{width:24px;height:24px;fill:currentColor;margin-left:3px}
-.cover:hover .cover-play,.cover:focus-within .cover-play{
-    transform:translate(-50%,-50%) scale(1)}
-.cover-play:focus-visible{outline:2px solid #fff;outline-offset:3px}
-/* mientras suena, el botón se queda visible y encendido */
-.cover .cover-play.sonando{opacity:1;background:#ab3530;border-color:#ab3530;
-    transform:translate(-50%,-50%) scale(1)}
-
-@media(max-width:760px){
-  .sp-bar{gap:10px;padding:8px 4vw}
-  .sp-close{width:36px;height:36px}
-  body.sp-abierto .site-footer{padding-bottom:112px}
-  .cover-play{width:54px;height:54px}
-  .cover-play svg{width:21px;height:21px}
-}
-/* en táctil no hay hover: el play se ve siempre, sin perder el centrado */
-@media(hover:none){
-  .cover .cover-play{opacity:1;transform:translate(-50%,-50%) scale(1)}
-}
-@media(prefers-reduced-motion:reduce){
-  .sp-close{transition:none}
 }

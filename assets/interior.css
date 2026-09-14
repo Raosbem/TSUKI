@@ -1,0 +1,88 @@
+/* ===================================================================
+   BASE de las páginas interiores (hoy: contacto.html)
+   -------------------------------------------------------------------
+   index.html lleva todo su CSS dentro del propio archivo porque el hero
+   3D depende de él. Una página interior no necesita nada de aquello:
+   solo la base (negro, tipografía, cursor) y el MENÚ superior, que se
+   copian de index.html para que las dos páginas se vean igual.
+   Si se retoca el menú en index.html, hay que retocarlo también aquí.
+   El resto (secciones, formulario, pie) sale de design.css, que es
+   compartido por las dos páginas.
+   =================================================================== */
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:#000;color:#fff;
+    font-family:"Plus Jakarta Sans",-apple-system,"Helvetica Neue",Arial,sans-serif;
+    overflow-x:hidden}
+/* mismo cursor metálico que en la portada */
+html,body{cursor:url("mouse-cursor.png") 1 0, auto}
+
+/* ---------- MENÚ superior (copia del de index.html) ----------
+   En la portada se esconde al salir del hero; aquí, al bajar el scroll.
+   "Contacto" va marcado como activo porque es la página actual. */
+#topmenu{position:fixed;top:4vh;left:50%;transform:translateX(-50%);
+      z-index:30;display:flex;gap:14px;pointer-events:auto;
+      transition:opacity .45s ease, transform .45s ease, filter .45s ease}
+/* al bajar se difumina y se va; al subir vuelve (lo decide el script del final
+   de contacto.html, según el sentido del scroll) */
+#topmenu.tm-hide{opacity:0;transform:translate(-50%,-20px);filter:blur(9px);
+      pointer-events:none}
+#topmenu .tm-btn{appearance:none;-webkit-appearance:none;
+      background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.18);
+      color:rgba(255,255,255,.75);font:inherit;
+      font-size:clamp(10px,.85vw,12px);font-weight:800;letter-spacing:.14em;
+      text-transform:uppercase;padding:10px 18px;border-radius:999px;
+      cursor:pointer;white-space:nowrap;text-decoration:none;
+      display:inline-flex;align-items:center;justify-content:center;
+      backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+      transition:color .25s ease,border-color .25s ease,background .25s ease}
+#topmenu .tm-btn:hover{color:#fff;border-color:rgba(171,53,48,.55)}
+#topmenu .tm-btn:focus-visible{outline:2px solid #ab3530;outline-offset:2px}
+#topmenu .tm-active{color:#fff;border-color:#ab3530;
+      background:rgba(171,53,48,.16);cursor:default}
+@media (max-width:760px){
+  #topmenu{top:2vh;gap:8px}
+  #topmenu .tm-btn{padding:8px 12px}
+}
+@media (prefers-reduced-motion:reduce){
+  #topmenu .tm-btn{transition:none}
+}
+
+/* La página interior no tiene hero: la sección arranca por debajo del menú
+   flotante, que aquí está siempre visible. */
+.pagina-interior #contacto{padding-top:clamp(104px,13vh,160px)}
+@media (max-width:760px){
+  .pagina-interior #contacto{padding-top:94px}
+}
+
+/* Pie de la página interior: es solo una barra fina, así que va SIN las líneas
+   de separación (ni la del propio pie ni la de encima del texto) y con todo
+   centrado, en columna: primero el reclamo y debajo los enlaces. */
+.pagina-interior .site-footer{border-top:0;padding-top:70px;
+    /* el resplandor rojo arranca desde MUY abajo y llega a negro puro antes del
+       borde superior: así no se ve el escalón de color contra la sección, que
+       también termina en negro. */
+    background:radial-gradient(ellipse at 50% 170%,
+        #3c1111 0%, #2b1010 20%, #1b0c0c 38%, #0d0707 58%, #000 78%)}
+.pagina-interior .footer-bottom{border-top:0;padding-top:0;
+    flex-direction:column;justify-content:center;align-items:center;
+    text-align:center;gap:16px}
+.pagina-interior .footer-bottom nav{justify-content:center}
+
+/* Sello de marca al final de la columna derecha, bajo el atajo de WhatsApp.
+   Sin caja: la propia silueta del sticker es la forma, con una sombra suave
+   para que no quede pegado al fondo negro. */
+.ct-sticker{margin:58px 0 0;padding:0;display:flex;justify-content:center}
+.ct-sticker img{width:min(240px,58%);height:auto;display:block;
+    filter:drop-shadow(0 20px 40px rgba(0,0,0,.8))}
+@media (max-width:1040px){
+  .ct-sticker{margin-top:36px}
+  .ct-sticker img{width:min(185px,44%)}
+}
+
+/* Teléfono: lista de prefijos + número, en la misma línea. En pantallas
+   estrechas el prefijo se queda arriba y el número debajo. */
+.ct-tel{display:grid;grid-template-columns:minmax(0,132px) minmax(0,1fr);gap:10px}
+.ct-tel select{text-overflow:ellipsis}
+@media (max-width:420px){
+  .ct-tel{grid-template-columns:1fr;gap:10px}
+}

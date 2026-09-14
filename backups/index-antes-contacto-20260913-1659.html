@@ -126,11 +126,13 @@
         transition:opacity .5s ease;pointer-events:none}
 
   /* ---------- MENÚ superior: dos accesos encima del título del hero ---------- */
-  /* "Desarrollo Artístico" solo marca la sección activa (esta página no navega
-     a ningún sitio) y "Contacto" lleva a contacto.html, donde están también las
-     redes sociales. Visible mientras se está en el hero; su z-index queda por
-     debajo del loader para no verse sobre la pantalla de carga, y se oculta al
-     entrar en la primera sección (ver el script del menú, más abajo). */
+  /* "Desarrollo Artístico" solo marca la sección activa (la web es de una
+     página, no navega a nada); "Redes Sociales" despliega los enlaces
+     externos (Instagram, Spotify, YouTube, Beatstars). Visible mientras se
+     está en el hero; su z-index queda por debajo del loader (6) para no
+     verse flotando sobre la pantalla de carga. Se oculta al entrar en la
+     sección de testimonios y reaparece si se vuelve a subir (ver script
+     junto al menú, más abajo, que decide esto según el scroll). */
   #topmenu{position:fixed;top:4vh;left:50%;transform:translateX(-50%);
         z-index:5;display:flex;gap:14px;pointer-events:auto;
         transition:opacity .4s ease, transform .4s ease}
@@ -148,6 +150,25 @@
   /* botón "activo" (Desarrollo Artístico): no es clicable, solo referencia visual */
   #topmenu .tm-active{color:#fff;border-color:#ab3530;
         background:rgba(171,53,48,.16);cursor:default}
+  #topmenu .tm-social{position:relative}
+  #topmenu .tm-dropdown{position:absolute;top:calc(100% + 10px);left:50%;
+        transform:translateX(-50%) translateY(-8px);min-width:190px;
+        background:rgba(10,10,10,.94);border:1px solid rgba(255,255,255,.14);
+        border-radius:14px;padding:8px;display:flex;flex-direction:column;gap:2px;
+        opacity:0;pointer-events:none;
+        transition:opacity .22s ease,transform .22s ease;
+        backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+        box-shadow:0 18px 40px -14px rgba(0,0,0,.7)}
+  #topmenu .tm-dropdown.open{opacity:1;transform:translateX(-50%) translateY(0);
+        pointer-events:auto}
+  #topmenu .tm-dropdown a{display:block;padding:10px 14px;border-radius:8px;
+        color:rgba(255,255,255,.78);font-size:13px;font-weight:600;
+        text-decoration:none;letter-spacing:.01em;
+        transition:background .2s ease,color .2s ease}
+  #topmenu .tm-dropdown a:hover,
+  #topmenu .tm-dropdown a:focus-visible{background:rgba(171,53,48,.18);
+        color:#fff;outline:none}
+
   /* ---------- 1) TÍTULO SOBRE LA CABEZA (blanco, mayúsculas, en arco) ---------- */
   /* la opacidad y el desplazamiento vertical los controla el scroll (JS): entra
      con el 1er scroll y luego se va hacia arriba. El arco lo dan los <path> del SVG */
@@ -434,6 +455,9 @@
       filter:brightness(.82) saturate(.96);
       transition:filter .5s ease, transform .8s cubic-bezier(.22,1,.36,1)}
   .cover:hover img{filter:brightness(1) saturate(1.03);transform:scale(1.06)}
+  /* enlace a Spotify = toda la portada (capa base) */
+  .cover .sp-link{position:absolute;inset:0;z-index:1}
+
   /* scrim que oscurece la portada al hover para que el texto SOBRE ella se lea */
   .cover .scrim{position:absolute;inset:0;z-index:2;pointer-events:none;opacity:0;
       background:rgba(0,0,0,.56);transition:opacity .45s ease}
@@ -585,7 +609,7 @@
     .tst-card{padding-bottom:20px}
   }
 </style>
-<link rel="stylesheet" href="assets/design.css?v=7">
+<link rel="stylesheet" href="assets/design.css?v=3">
 </head>
 <body id="inicio">
   <!-- FONDO: capas detrás del canvas 3D. Da profundidad/textura sin tocar el hero.
@@ -605,8 +629,36 @@
        Sociales" despliega los enlaces externos del colectivo. -->
   <nav id="topmenu" aria-label="Menú">
     <a class="tm-btn tm-active tm-home" href="#inicio"><span class="tm-wide">Desarrollo Art&#237;stico</span><span class="tm-compact">Estudio</span></a>
-    <a class="tm-btn" href="contacto.html">Contacto</a>
+    <div class="tm-social">
+      <button type="button" class="tm-btn" id="tm-social-btn"
+              aria-haspopup="true" aria-expanded="false">Redes Sociales</button>
+      <div class="tm-dropdown" id="tm-dropdown" role="menu" aria-label="Redes sociales">
+        <a role="menuitem" href="https://www.instagram.com/tsukiboyz_/" target="_blank" rel="noopener">Instagram</a>
+        <a role="menuitem" href="https://open.spotify.com/intl-es/artist/6BGPUhhR2rJ0EJjWBu0Lqe?si=4p7BvGliSuCk9LrJRZ6nBg" target="_blank" rel="noopener">Spotify</a>
+        <a role="menuitem" href="https://www.youtube.com/@TSUKIBOYZ-1" target="_blank" rel="noopener">YouTube</a>
+        <a role="menuitem" href="https://www.beatstars.com/TSUKIBOYZ" target="_blank" rel="noopener">Beatstars</a>
+      </div>
+    </div>
   </nav>
+  <script>
+  (function(){
+    var btn = document.getElementById('tm-social-btn');
+    var dd  = document.getElementById('tm-dropdown');
+    if (!btn || !dd) return;
+    function close(){ dd.classList.remove('open'); btn.setAttribute('aria-expanded','false'); }
+    function toggle(){
+      var open = !dd.classList.contains('open');
+      dd.classList.toggle('open', open);
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+    btn.addEventListener('click', function(e){ e.stopPropagation(); toggle(); });
+    document.addEventListener('click', function(e){
+      if (!dd.contains(e.target) && e.target !== btn) close();
+    });
+    document.addEventListener('keydown', function(e){ if (e.key === 'Escape') close(); });
+  })();
+  </script>
+
   <!-- PARPADEO del ícono de la pestaña: cada 5s cambia el favicon a la
        versión "ojos cerrados" un instante y vuelve a la de "ojos abiertos".
        Cambiar el href del <link> es la forma que funciona igual en todos los
@@ -635,9 +687,16 @@
   document.addEventListener('DOMContentLoaded', function(){
     var menu = document.getElementById('topmenu');
     var firstSection = document.getElementById('plan') || document.getElementById('testimonios');
+    var dd = document.getElementById('tm-dropdown');
+    var ddBtn = document.getElementById('tm-social-btn');
     if (!menu || !firstSection) return;
     function update(){
-      menu.classList.toggle('tm-hide', firstSection.getBoundingClientRect().top <= 0);
+      var hide = firstSection.getBoundingClientRect().top <= 0;
+      if (hide && !menu.classList.contains('tm-hide') && dd){
+        dd.classList.remove('open');
+        if (ddBtn) ddBtn.setAttribute('aria-expanded','false');
+      }
+      menu.classList.toggle('tm-hide', hide);
     }
     addEventListener('scroll', update, {passive:true});
     addEventListener('resize', update);
@@ -652,7 +711,7 @@
 
   <!-- 2) caja abajo-izquierda (2ª en aparecer) -->
   <div id="copy-bl" class="corner">
-    <p class="eyebrow">Un plan · Un equipo</p>
+    <p class="eyebrow">Un mes · Un equipo</p>
     <h1>No necesitas otro beat.<br>Necesitas <span class="hl">un equipo.<svg class="squiggle" viewBox="0 0 300 40" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M5,27 C42,15 72,31 112,21 C152,12 182,31 222,19 C252,10 276,25 295,17"/></svg></span></h1>
     <p class="lead">Un mes trabajando mano a mano con productores e ingenieros involucrados en tu proyecto.</p>
   </div>
@@ -704,7 +763,7 @@
     <div class="plan-card">
       <div class="plan-card-head">
         <p class="plan-card-label">Plan mensual</p>
-        <p class="plan-price"><span class="amount">$450</span><span class="period">USD / mes</span></p>
+        <p class="plan-price"><span class="amount">$450</span><span class="period">/ mes</span></p>
       </div>
       <ul class="plan-features">
         <li><span class="dash" aria-hidden="true"></span>Canciones ilimitadas dentro del mes</li>
@@ -716,7 +775,6 @@
         <li><span class="dash" aria-hidden="true"></span>Ayuda con el tema legal de splits (documento firmado por el equipo)</li>
         <li><span class="dash" aria-hidden="true"></span>Feedback asíncrono por Discord entre sesiones</li>
       </ul>
-      <p class="plan-note">Precio en dólares estadounidenses (USD) por mes.</p>
     </div>
   </section>
 
@@ -751,7 +809,7 @@
     <p class="footer-wordmark" aria-label="Tsukiboyz">TSUKIBOYZ<span aria-hidden="true">.</span></p>
     <div class="footer-bottom">
       <span>PRODUCCI&#211;N / MEZCLA / MASTERING</span>
-      <nav aria-label="Navegaci&#243;n al pie"><a href="#inicio">Volver arriba &#8593;</a></nav>
+      <nav aria-label="Navegaci&#243;n al pie"><a href="#testimonios">Artistas</a><a href="#catalogo">M&#250;sica</a><a href="#inicio">Volver arriba &#8593;</a></nav>
     </div>
   </footer>
 
@@ -898,40 +956,6 @@
   <!-- Brand audio: requested only when the entry button is clicked. -->
   <audio id="tag-audio" src="assets/audio/tag-tsukiboyz.m4a" preload="auto"></audio>
 
-  <!-- La pantalla de carga sale UNA VEZ por visita: al volver a esta página
-       desde Contacto el contenido aparece directo, sin barra, sin "Toca para
-       entrar" y sin el tag de audio. Va aquí arriba, antes de los scripts 3D,
-       para que destapar el contenido no dependa de que Three.js llegue a
-       arrancar. sessionStorage y no localStorage: si se cierra el navegador y
-       se vuelve otro día, la presentación se ve otra vez. -->
-  <script>
-  (function(){
-    var ya = false;
-    try { ya = sessionStorage.getItem('tsuki-entrado') === '1'; } catch(e){}
-    window.__tsukiYaEntro = ya;
-    if (!ya) return;
-
-    var ld = document.getElementById('loader');
-    if (ld) ld.classList.add('hide');
-
-    // Y la portada no arranca con la cabeza sola: se coloca en el punto donde
-    // el TÍTULO ya está puesto —con su línea roja dibujándose como siempre—,
-    // que es como se ve la web una vez dentro. 0.13 del recorrido cae dentro
-    // del tramo del título (0.047–0.326 en onScroll) y antes de que la cabeza
-    // empiece a subir (0.223), así que la cabeza se queda donde está.
-    var track = document.querySelector('.track');
-    if (!track) return;
-    setTimeout(function(){
-      // si el navegador restauró una posición (recarga a media página) se
-      // respeta la del visitante; esto es solo para quien llega por arriba
-      if (window.scrollY >= 40) return;
-      var max = Math.max(1, track.offsetHeight - window.innerHeight);
-      window.scrollTo({top: Math.round(0.13 * max), behavior:'instant'});
-    }, 260);   // deja pintar antes el estado inicial: si no, la línea roja
-               // aparecería ya dibujada en vez de animarse
-  })();
-  </script>
-
   <!-- modo preview: ?reveal muestra el copy sin scroll (independiente del 3D) -->
   <script>
     if (location.search.includes('reveal')) {
@@ -954,20 +978,12 @@
   window.tsuki3DError = function(error){
     console.error('No se pudo mostrar el logo 3D:', error);
     const overlay = document.getElementById('loader');
-    // si el visitante ya entró en esta visita, la pantalla se queda fuera:
-    // verá la web sin la cabeza 3D, pero sin que le tapen el contenido
-    if (window.__tsukiYaEntro) return;
     overlay.classList.add('ask');
     overlay.setAttribute('role', 'status');
     const label = overlay.querySelector('.ld-enter');
     label.disabled = false;
     label.textContent = 'No se pudo mostrar el logo. Continuar';
-    label.onclick = function(){
-      // aunque el 3D falle, el visitante ya ha entrado: al volver desde otra
-      // página no debe repetirse la pantalla de carga
-      try { sessionStorage.setItem('tsuki-entrado','1'); } catch(e){}
-      overlay.classList.add('hide');
-    };
+    label.onclick = function(){ overlay.classList.add('hide'); };
   };
   </script>
   <script src="assets/vendor/THREE.js" onerror="tsuki3DError('Falta THREE.js')"></script>
@@ -1133,14 +1149,6 @@
   // (MIN_MS): servido en local el modelo entra de golpe y la barra ni se vería.
   const ldEl  = document.getElementById('loader');
   const ldBar = ldEl.querySelector('.ld-bar i');
-  // La pantalla de carga sale UNA VEZ por visita. Al volver desde Contacto (o
-  // desde cualquier otra página) el contenido aparece directo: ya se entró.
-  // sessionStorage y no localStorage a propósito → si el visitante cierra el
-  // navegador y vuelve otro día, la presentación se ve otra vez.
-  const YA_ENTRO = !!window.__tsukiYaEntro;
-  function marcarEntrada(){
-    try { sessionStorage.setItem('tsuki-entrado','1'); } catch(e){}
-  }
   const LD_T0 = performance.now(), LD_MIN_MS = 1100;
   let ldRatio = 0, ldDone = false, ldEnded = false;
   // Instante en que se destapa la cabeza. Sirve para el ARRANQUE: el primer
@@ -1162,7 +1170,6 @@
     if (ldEl.classList.contains('hide')) return;
     ldEl.classList.remove('ask');
     ldEl.classList.add('hide');
-    marcarEntrada();                             // ya no se repite en esta visita
     gateT0 = performance.now();                  // arranca la cuenta del segundo
   }
   function ldFinish(){
@@ -1184,15 +1191,7 @@
     }, {once:true});
   }
   // Preview and reduced-motion modes also require the entry button.
-  // Si ya se entró antes en esta visita no hay barra, ni botón, ni tag de audio:
-  // se destapa el contenido de una.
-  if (YA_ENTRO){
-    ldEnded = true;
-    ldEl.classList.add('hide');
-    gateT0 = performance.now();
-  } else {
-    ldPaint();
-  }
+  ldPaint();
 
   // ---- carga del modelo ----
   const loader = new GLTFLoader();
@@ -1351,7 +1350,6 @@
   }
   addEventListener('scroll', onScroll, {passive:true});
   onScroll();
-
 
   let mx=0, my=0, tmx=0, tmy=0;
   addEventListener('pointermove', e=>{
@@ -1567,20 +1565,11 @@
         return '<a class="ig" href="'+esc(a[1])+'" target="_blank" rel="noopener"'
              + ' aria-label="'+esc(a[0])+' en Instagram">'+esc(a[0])+' <span aria-hidden="true">&#8599;</span></a>';
       }).join(', ');
-      // de la URL de Spotify se saca el tipo y el id para poder reproducirla
-      // aquí dentro (spotify:track:xxxx). La portada ya no lleva a Spotify:
-      // lo único que se pulsa es el play del centro.
-      var m = /\/(track|album)\/([A-Za-z0-9]+)/.exec(u);
-      var uri = m ? 'spotify:'+m[1]+':'+m[2] : '';
       html += '<div class="cover">'
            +  '<img src="assets/portadas/'+f+'.jpg" alt="'+et+'" loading="lazy">'
+           +  '<a class="sp-link" href="'+esc(u)+'" target="_blank" rel="noopener" aria-label="'+et+' en Spotify"></a>'
            +  '<span class="scrim" aria-hidden="true"></span>'
-           + (uri
-              ? '<button class="cover-play" type="button" data-uri="'+uri+'"'
-                + ' aria-label="Escuchar '+et+' aquí mismo">'
-                + '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>'
-                + '</button>'
-              : '')
+           +  '<span class="cover-play" aria-hidden="true">&#8599;</span>'
            +  '<span class="track-number" aria-hidden="true">'+String(k+1).padStart(2,'0')+' / TSUKI</span>'
            +  '<span class="info">'
            +    '<span class="t">'+et+'</span>'
@@ -1714,107 +1703,6 @@
   })();
   </script>
 
-  <!-- ====== REPRODUCTOR: barra fija con el player de Spotify ======
-       Las canciones se escuchan sin salir de la web. El reproductor es el
-       oficial de Spotify (API de iframes), así que trae su propio play/pausa y
-       su barra para adelantar, las reproducciones cuentan para el artista y no
-       hay que alojar ningún audio. Ojo: Spotify da la canción ENTERA a quien
-       tenga su sesión iniciada en ese navegador; a los demás, 30 segundos.
-       El script de Spotify se carga solo la primera vez que alguien pulsa play. -->
-  <div id="sp-player" class="sp-player" hidden role="region" aria-label="Reproductor">
-    <div class="sp-bar">
-      <div class="sp-embed" id="sp-embed"></div>
-      <button class="sp-close" type="button" aria-label="Cerrar el reproductor">&#10005;</button>
-    </div>
-  </div>
-
-  <script>
-  (function(){
-    var caja    = document.getElementById('sp-player');
-    var hueco   = document.getElementById('sp-embed');
-    var cerrar  = caja && caja.querySelector('.sp-close');
-    var grid    = document.getElementById('cat-grid');
-    if (!caja || !hueco || !grid) return;
-
-    var api = null;          // la API de Spotify cuando termina de cargar
-    var mando = null;        // el controlador del reproductor ya creado
-    var enEspera = null;     // lo que se pidió antes de que la API estuviera lista
-    var sonando = null;      // el botón de la portada que está sonando
-
-    // Spotify llama a esta función global al cargar su script
-    window.onSpotifyIframeApiReady = function(IFrameAPI){
-      api = IFrameAPI;
-      if (enEspera){ var p = enEspera; enEspera = null; arranca(p); }
-    };
-
-    function cargaApi(){
-      if (document.getElementById('sp-api')) return;
-      var s = document.createElement('script');
-      s.id = 'sp-api';
-      s.src = 'https://open.spotify.com/embed/iframe-api/v1';
-      s.async = true;
-      document.head.appendChild(s);
-    }
-
-    function arranca(tema){
-      if (!api){ enEspera = tema; cargaApi(); return; }
-      if (mando){
-        mando.loadUri(tema.uri);
-        // loadUri no arranca solo: se le da un instante para montar el tema
-        setTimeout(function(){ try { mando.play(); } catch(e){} }, 350);
-        return;
-      }
-      api.createController(hueco, {uri:tema.uri, width:'100%', height:72}, function(ctrl){
-        mando = ctrl;
-        ctrl.addListener('ready', function(){ try { ctrl.play(); } catch(e){} });
-      });
-    }
-
-    grid.addEventListener('click', function(e){
-      var btn = e.target.closest('.cover-play[data-uri]');
-      if (!btn) return;
-      e.preventDefault();
-      e.stopPropagation();            // que no se dispare el enlace de la portada
-      // si el vídeo del hero estaba sonando, se calla: manda la música
-      if (window.__tsukiPauseVideo) window.__tsukiPauseVideo();
-      if (sonando && sonando !== btn) sonando.classList.remove('sonando');
-      sonando = btn;
-      btn.classList.add('sonando');
-      caja.hidden = false;
-      document.body.classList.add('sp-abierto');
-      arranca({uri: btn.dataset.uri});
-    });
-
-    cerrar.addEventListener('click', function(){
-      if (mando){ try { mando.pause(); } catch(e){} }
-      caja.hidden = true;
-      document.body.classList.remove('sp-abierto');
-      if (sonando){ sonando.classList.remove('sonando'); sonando = null; }
-    });
-  })();
-  </script>
-
-  <!-- "Volver arriba" no devuelve al principio del todo (donde solo se ve la
-       cabeza): deja la portada en el mismo punto que al entrar desde Contacto,
-       con el título puesto y su línea roja dibujándose. -->
-  <script>
-  (function(){
-    var enlace = document.querySelector('.site-footer a[href="#inicio"]');
-    var track  = document.querySelector('.track');
-    var titulo = document.getElementById('hero-title');
-    if (!enlace || !track) return;
-    enlace.addEventListener('click', function(e){
-      e.preventDefault();
-      // abajo el título está en .out, y en ese estado el subrayado se queda
-      // PINTADO. Se le quitan las clases (y se fuerza el recálculo) para que
-      // la línea vuelva a cero y se dibuje otra vez al llegar arriba.
-      if (titulo){ titulo.classList.remove('in','out'); void titulo.offsetWidth; }
-      var max = Math.max(1, track.offsetHeight - window.innerHeight);
-      window.scrollTo({top: Math.round(0.13 * max), behavior:'instant'});
-    });
-  })();
-  </script>
-
-  <script src="assets/design.js?v=6"></script>
+  <script src="assets/design.js?v=3"></script>
 </body>
 </html>

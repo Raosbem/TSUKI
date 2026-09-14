@@ -434,6 +434,9 @@
       filter:brightness(.82) saturate(.96);
       transition:filter .5s ease, transform .8s cubic-bezier(.22,1,.36,1)}
   .cover:hover img{filter:brightness(1) saturate(1.03);transform:scale(1.06)}
+  /* enlace a Spotify = toda la portada (capa base) */
+  .cover .sp-link{position:absolute;inset:0;z-index:1}
+
   /* scrim que oscurece la portada al hover para que el texto SOBRE ella se lea */
   .cover .scrim{position:absolute;inset:0;z-index:2;pointer-events:none;opacity:0;
       background:rgba(0,0,0,.56);transition:opacity .45s ease}
@@ -585,7 +588,7 @@
     .tst-card{padding-bottom:20px}
   }
 </style>
-<link rel="stylesheet" href="assets/design.css?v=7">
+<link rel="stylesheet" href="assets/design.css?v=6">
 </head>
 <body id="inicio">
   <!-- FONDO: capas detrás del canvas 3D. Da profundidad/textura sin tocar el hero.
@@ -1568,19 +1571,22 @@
              + ' aria-label="'+esc(a[0])+' en Instagram">'+esc(a[0])+' <span aria-hidden="true">&#8599;</span></a>';
       }).join(', ');
       // de la URL de Spotify se saca el tipo y el id para poder reproducirla
-      // aquí dentro (spotify:track:xxxx). La portada ya no lleva a Spotify:
-      // lo único que se pulsa es el play del centro.
+      // aquí dentro (spotify:track:xxxx). Si no se reconoce, la portada se
+      // queda solo con su enlace de siempre.
       var m = /\/(track|album)\/([A-Za-z0-9]+)/.exec(u);
       var uri = m ? 'spotify:'+m[1]+':'+m[2] : '';
+      var quien = arts.map(function(a){ return a[0]; }).join(', ');
       html += '<div class="cover">'
            +  '<img src="assets/portadas/'+f+'.jpg" alt="'+et+'" loading="lazy">'
+           +  '<a class="sp-link" href="'+esc(u)+'" target="_blank" rel="noopener" aria-label="'+et+' en Spotify"></a>'
            +  '<span class="scrim" aria-hidden="true"></span>'
            + (uri
               ? '<button class="cover-play" type="button" data-uri="'+uri+'"'
+                + ' data-titulo="'+et+'" data-artistas="'+esc(quien)+'"'
                 + ' aria-label="Escuchar '+et+' aquí mismo">'
                 + '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>'
                 + '</button>'
-              : '')
+              : '<span class="cover-play" aria-hidden="true">&#8599;</span>')
            +  '<span class="track-number" aria-hidden="true">'+String(k+1).padStart(2,'0')+' / TSUKI</span>'
            +  '<span class="info">'
            +    '<span class="t">'+et+'</span>'
@@ -1723,6 +1729,10 @@
        El script de Spotify se carga solo la primera vez que alguien pulsa play. -->
   <div id="sp-player" class="sp-player" hidden role="region" aria-label="Reproductor">
     <div class="sp-bar">
+      <p class="sp-now">
+        <span class="sp-label">Sonando</span>
+        <span class="sp-title"></span>
+      </p>
       <div class="sp-embed" id="sp-embed"></div>
       <button class="sp-close" type="button" aria-label="Cerrar el reproductor">&#10005;</button>
     </div>
@@ -1732,6 +1742,7 @@
   (function(){
     var caja    = document.getElementById('sp-player');
     var hueco   = document.getElementById('sp-embed');
+    var titulo  = caja && caja.querySelector('.sp-title');
     var cerrar  = caja && caja.querySelector('.sp-close');
     var grid    = document.getElementById('cat-grid');
     if (!caja || !hueco || !grid) return;
@@ -1764,7 +1775,7 @@
         setTimeout(function(){ try { mando.play(); } catch(e){} }, 350);
         return;
       }
-      api.createController(hueco, {uri:tema.uri, width:'100%', height:72}, function(ctrl){
+      api.createController(hueco, {uri:tema.uri, width:'100%', height:80}, function(ctrl){
         mando = ctrl;
         ctrl.addListener('ready', function(){ try { ctrl.play(); } catch(e){} });
       });
@@ -1780,6 +1791,8 @@
       if (sonando && sonando !== btn) sonando.classList.remove('sonando');
       sonando = btn;
       btn.classList.add('sonando');
+      titulo.textContent = btn.dataset.titulo
+        + (btn.dataset.artistas ? ' · ' + btn.dataset.artistas : '');
       caja.hidden = false;
       document.body.classList.add('sp-abierto');
       arranca({uri: btn.dataset.uri});

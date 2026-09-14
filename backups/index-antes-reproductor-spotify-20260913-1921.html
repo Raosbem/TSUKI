@@ -434,6 +434,9 @@
       filter:brightness(.82) saturate(.96);
       transition:filter .5s ease, transform .8s cubic-bezier(.22,1,.36,1)}
   .cover:hover img{filter:brightness(1) saturate(1.03);transform:scale(1.06)}
+  /* enlace a Spotify = toda la portada (capa base) */
+  .cover .sp-link{position:absolute;inset:0;z-index:1}
+
   /* scrim que oscurece la portada al hover para que el texto SOBRE ella se lea */
   .cover .scrim{position:absolute;inset:0;z-index:2;pointer-events:none;opacity:0;
       background:rgba(0,0,0,.56);transition:opacity .45s ease}
@@ -585,7 +588,7 @@
     .tst-card{padding-bottom:20px}
   }
 </style>
-<link rel="stylesheet" href="assets/design.css?v=7">
+<link rel="stylesheet" href="assets/design.css?v=5">
 </head>
 <body id="inicio">
   <!-- FONDO: capas detrás del canvas 3D. Da profundidad/textura sin tocar el hero.
@@ -1567,20 +1570,11 @@
         return '<a class="ig" href="'+esc(a[1])+'" target="_blank" rel="noopener"'
              + ' aria-label="'+esc(a[0])+' en Instagram">'+esc(a[0])+' <span aria-hidden="true">&#8599;</span></a>';
       }).join(', ');
-      // de la URL de Spotify se saca el tipo y el id para poder reproducirla
-      // aquí dentro (spotify:track:xxxx). La portada ya no lleva a Spotify:
-      // lo único que se pulsa es el play del centro.
-      var m = /\/(track|album)\/([A-Za-z0-9]+)/.exec(u);
-      var uri = m ? 'spotify:'+m[1]+':'+m[2] : '';
       html += '<div class="cover">'
            +  '<img src="assets/portadas/'+f+'.jpg" alt="'+et+'" loading="lazy">'
+           +  '<a class="sp-link" href="'+esc(u)+'" target="_blank" rel="noopener" aria-label="'+et+' en Spotify"></a>'
            +  '<span class="scrim" aria-hidden="true"></span>'
-           + (uri
-              ? '<button class="cover-play" type="button" data-uri="'+uri+'"'
-                + ' aria-label="Escuchar '+et+' aquí mismo">'
-                + '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>'
-                + '</button>'
-              : '')
+           +  '<span class="cover-play" aria-hidden="true">&#8599;</span>'
            +  '<span class="track-number" aria-hidden="true">'+String(k+1).padStart(2,'0')+' / TSUKI</span>'
            +  '<span class="info">'
            +    '<span class="t">'+et+'</span>'
@@ -1714,86 +1708,6 @@
   })();
   </script>
 
-  <!-- ====== REPRODUCTOR: barra fija con el player de Spotify ======
-       Las canciones se escuchan sin salir de la web. El reproductor es el
-       oficial de Spotify (API de iframes), así que trae su propio play/pausa y
-       su barra para adelantar, las reproducciones cuentan para el artista y no
-       hay que alojar ningún audio. Ojo: Spotify da la canción ENTERA a quien
-       tenga su sesión iniciada en ese navegador; a los demás, 30 segundos.
-       El script de Spotify se carga solo la primera vez que alguien pulsa play. -->
-  <div id="sp-player" class="sp-player" hidden role="region" aria-label="Reproductor">
-    <div class="sp-bar">
-      <div class="sp-embed" id="sp-embed"></div>
-      <button class="sp-close" type="button" aria-label="Cerrar el reproductor">&#10005;</button>
-    </div>
-  </div>
-
-  <script>
-  (function(){
-    var caja    = document.getElementById('sp-player');
-    var hueco   = document.getElementById('sp-embed');
-    var cerrar  = caja && caja.querySelector('.sp-close');
-    var grid    = document.getElementById('cat-grid');
-    if (!caja || !hueco || !grid) return;
-
-    var api = null;          // la API de Spotify cuando termina de cargar
-    var mando = null;        // el controlador del reproductor ya creado
-    var enEspera = null;     // lo que se pidió antes de que la API estuviera lista
-    var sonando = null;      // el botón de la portada que está sonando
-
-    // Spotify llama a esta función global al cargar su script
-    window.onSpotifyIframeApiReady = function(IFrameAPI){
-      api = IFrameAPI;
-      if (enEspera){ var p = enEspera; enEspera = null; arranca(p); }
-    };
-
-    function cargaApi(){
-      if (document.getElementById('sp-api')) return;
-      var s = document.createElement('script');
-      s.id = 'sp-api';
-      s.src = 'https://open.spotify.com/embed/iframe-api/v1';
-      s.async = true;
-      document.head.appendChild(s);
-    }
-
-    function arranca(tema){
-      if (!api){ enEspera = tema; cargaApi(); return; }
-      if (mando){
-        mando.loadUri(tema.uri);
-        // loadUri no arranca solo: se le da un instante para montar el tema
-        setTimeout(function(){ try { mando.play(); } catch(e){} }, 350);
-        return;
-      }
-      api.createController(hueco, {uri:tema.uri, width:'100%', height:72}, function(ctrl){
-        mando = ctrl;
-        ctrl.addListener('ready', function(){ try { ctrl.play(); } catch(e){} });
-      });
-    }
-
-    grid.addEventListener('click', function(e){
-      var btn = e.target.closest('.cover-play[data-uri]');
-      if (!btn) return;
-      e.preventDefault();
-      e.stopPropagation();            // que no se dispare el enlace de la portada
-      // si el vídeo del hero estaba sonando, se calla: manda la música
-      if (window.__tsukiPauseVideo) window.__tsukiPauseVideo();
-      if (sonando && sonando !== btn) sonando.classList.remove('sonando');
-      sonando = btn;
-      btn.classList.add('sonando');
-      caja.hidden = false;
-      document.body.classList.add('sp-abierto');
-      arranca({uri: btn.dataset.uri});
-    });
-
-    cerrar.addEventListener('click', function(){
-      if (mando){ try { mando.pause(); } catch(e){} }
-      caja.hidden = true;
-      document.body.classList.remove('sp-abierto');
-      if (sonando){ sonando.classList.remove('sonando'); sonando = null; }
-    });
-  })();
-  </script>
-
   <!-- "Volver arriba" no devuelve al principio del todo (donde solo se ve la
        cabeza): deja la portada en el mismo punto que al entrar desde Contacto,
        con el título puesto y su línea roja dibujándose. -->
@@ -1815,6 +1729,6 @@
   })();
   </script>
 
-  <script src="assets/design.js?v=6"></script>
+  <script src="assets/design.js?v=5"></script>
 </body>
 </html>
