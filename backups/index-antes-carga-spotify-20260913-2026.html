@@ -585,7 +585,7 @@
     .tst-card{padding-bottom:20px}
   }
 </style>
-<link rel="stylesheet" href="assets/design.css?v=8">
+<link rel="stylesheet" href="assets/design.css?v=7">
 </head>
 <body id="inicio">
   <!-- FONDO: capas detrás del canvas 3D. Da profundidad/textura sin tocar el hero.
@@ -1740,7 +1740,6 @@
     var mando = null;        // el controlador del reproductor ya creado
     var enEspera = null;     // lo que se pidió antes de que la API estuviera lista
     var sonando = null;      // el botón de la portada que está sonando
-    var calentado = false;   // si ya se fue preparando la conexión con Spotify
 
     // Spotify llama a esta función global al cargar su script
     window.onSpotifyIframeApiReady = function(IFrameAPI){
@@ -1757,35 +1756,6 @@
       document.head.appendChild(s);
     }
 
-    // Adelantar trabajo para que el primer play no se haga esperar: se abre la
-    // conexión con los servidores de Spotify y se baja su script ANTES de que
-    // nadie pulse nada. Solo se hace cuando el catálogo ya está cerca de verse,
-    // así no le cuesta nada a quien entra y se queda arriba.
-    function calienta(){
-      if (calentado) return;
-      calentado = true;
-      ['https://open.spotify.com',
-       'https://embed-cdn.spotifycdn.com',
-       'https://encore.scdn.co',
-       'https://i.scdn.co'].forEach(function(host){
-        var l = document.createElement('link');
-        l.rel = 'preconnect'; l.href = host; l.crossOrigin = '';
-        document.head.appendChild(l);
-      });
-      cargaApi();
-    }
-
-    var cat = document.getElementById('catalogo');
-    if (cat && 'IntersectionObserver' in window){
-      var vig = new IntersectionObserver(function(ent){
-        if (ent[0].isIntersecting){ vig.disconnect(); calienta(); }
-      }, {rootMargin: '700px 0px'});
-      vig.observe(cat);
-    }
-    // y si alguien va directo al botón, se empieza al acercar el ratón o el dedo
-    grid.addEventListener('pointerenter', calienta, true);
-    grid.addEventListener('touchstart', calienta, {passive:true});
-
     function arranca(tema){
       if (!api){ enEspera = tema; cargaApi(); return; }
       if (mando){
@@ -1794,44 +1764,31 @@
         setTimeout(function(){ try { mando.play(); } catch(e){} }, 350);
         return;
       }
-      api.createController(hueco, {uri:tema.uri, width:'100%', height:80}, function(ctrl){
+      api.createController(hueco, {uri:tema.uri, width:'100%', height:72}, function(ctrl){
         mando = ctrl;
         ctrl.addListener('ready', function(){ try { ctrl.play(); } catch(e){} });
-        // en cuanto suena algo, se apaga el aviso de "cargando"
-        ctrl.addListener('playback_update', function(){ apagaEspera(); });
       });
-    }
-
-    function apagaEspera(){
-      var q = grid.querySelector('.cover-play.cargando');
-      if (q) q.classList.remove('cargando');
     }
 
     grid.addEventListener('click', function(e){
       var btn = e.target.closest('.cover-play[data-uri]');
       if (!btn) return;
       e.preventDefault();
-      e.stopPropagation();
+      e.stopPropagation();            // que no se dispare el enlace de la portada
       // si el vídeo del hero estaba sonando, se calla: manda la música
       if (window.__tsukiPauseVideo) window.__tsukiPauseVideo();
       if (sonando && sonando !== btn) sonando.classList.remove('sonando');
-      apagaEspera();
       sonando = btn;
       btn.classList.add('sonando');
-      // mientras Spotify monta el tema, el botón avisa de que está trabajando
-      if (!mando) btn.classList.add('cargando');
       caja.hidden = false;
       document.body.classList.add('sp-abierto');
       arranca({uri: btn.dataset.uri});
-      // por si el aviso de reproducción no llega (sesión cerrada, bloqueos…)
-      setTimeout(apagaEspera, 6000);
     });
 
     cerrar.addEventListener('click', function(){
       if (mando){ try { mando.pause(); } catch(e){} }
       caja.hidden = true;
       document.body.classList.remove('sp-abierto');
-      apagaEspera();
       if (sonando){ sonando.classList.remove('sonando'); sonando = null; }
     });
   })();
