@@ -21,15 +21,15 @@
   #gl,#stage,.track,#copy-bl,#copy-br,#hero-title{cursor:inherit}
 
   /* pista de scroll: da altura para poder scrollear y girar la cabeza.
-     600vh: recorrido real = 500vh, repartido en CINCO tiempos que no se pisan
+     530vh: recorrido real = 430vh, repartido en CINCO tiempos que no se pisan
      (ver umbrales en onScroll): cabeza sola → título → caja izquierda entera →
      caja derecha → se difuminan las dos cajas y entra el CTA de WhatsApp, y el
      hero entero se difumina al final para entregarle la pantalla a la sección 2.
      Los tramos son LARGOS a propósito (~1.6x de la primera versión): con tramos
      cortos los textos pasaban de golpe al scrollear y no daba tiempo a leerlos.
-     Si se cambia esta altura, hay que cambiar RECORRIDO en el script (altura
-     menos 100vh): los umbrales de onScroll() y headY() van en vh sobre él. */
-  .track{height:600vh;position:relative;z-index:2;pointer-events:none}
+     Si se cambia esta altura, hay que reescalar los umbrales de onScroll() y
+     de headY(). */
+  .track{height:530vh;position:relative;z-index:2;pointer-events:none}
   /* FUNDIDO hero → primera sección: velo negro en los últimos 75vh de la pista
      que se desvanece hacia arriba. Al scrollear, el fondo del hero se apaga y
      la sección entra sin costura. Va largo y con paradas suaves para que el
@@ -585,7 +585,7 @@
     .tst-card{padding-bottom:20px}
   }
 </style>
-<link rel="stylesheet" href="assets/design.css?v=9">
+<link rel="stylesheet" href="assets/design.css?v=8">
 </head>
 <body id="inicio">
   <!-- FONDO: capas detrás del canvas 3D. Da profundidad/textura sin tocar el hero.
@@ -753,13 +753,6 @@
       <span>PRODUCCI&#211;N / MEZCLA / MASTERING</span>
       <nav aria-label="Navegaci&#243;n al pie"><a href="#inicio">Volver arriba &#8593;</a></nav>
     </div>
-    <nav class="footer-legal" aria-label="Informaci&#243;n legal">
-      <a href="aviso-legal.html">Aviso legal</a>
-      <a href="privacidad.html">Pol&#237;tica de privacidad</a>
-      <a href="cookies.html">Pol&#237;tica de cookies</a>
-      <a href="terminos.html">T&#233;rminos y condiciones</a>
-      <a href="preferencias-cookies.html">Preferencias de cookies</a>
-    </nav>
   </footer>
 
   <!-- reproductor: el iframe de YouTube se inserta SOLO al pulsar play, para no
@@ -923,9 +916,9 @@
 
     // Y la portada no arranca con la cabeza sola: se coloca en el punto donde
     // el TÍTULO ya está puesto —con su línea roja dibujándose como siempre—,
-    // que es como se ve la web una vez dentro. 56vh (0.112 de los 500vh de
-    // recorrido) cae dentro del tramo del título (20–140vh en onScroll) y antes
-    // de que la cabeza empiece a subir (96vh), así que se queda donde está.
+    // que es como se ve la web una vez dentro. 0.13 del recorrido cae dentro
+    // del tramo del título (0.047–0.326 en onScroll) y antes de que la cabeza
+    // empiece a subir (0.223), así que la cabeza se queda donde está.
     var track = document.querySelector('.track');
     if (!track) return;
     setTimeout(function(){
@@ -933,7 +926,7 @@
       // respeta la del visitante; esto es solo para quien llega por arriba
       if (window.scrollY >= 40) return;
       var max = Math.max(1, track.offsetHeight - window.innerHeight);
-      window.scrollTo({top: Math.round(0.112 * max), behavior:'instant'});
+      window.scrollTo({top: Math.round(0.13 * max), behavior:'instant'});
     }, 260);   // deja pintar antes el estado inicial: si no, la línea roja
                // aparecería ya dibujada en vez de animarse
   })();
@@ -1292,7 +1285,7 @@
   function measure(){
     if (!track) {
       console.error('❌ track es null en measure()');
-      trackH = window.innerHeight * 6;    // fallback: 600vh
+      trackH = window.innerHeight * 5.3;  // fallback: 530vh
       maxScroll = trackH - innerHeight;
       return;
     }
@@ -1302,11 +1295,6 @@
     console.log('📊 maxScroll=', maxScroll);
   }
   measure();
-
-  // Los umbrales se escriben en vh de recorrido (altura de .track − 100vh) y
-  // aquí se pasan a la fracción 0..1 que es scrollN.
-  const RECORRIDO = 500;
-  const vh = v => v / RECORRIDO;
 
   function onScroll(){
     const y = scrollY;
@@ -1325,37 +1313,36 @@
     // 1º) TÍTULO: entra SUAVE (transición CSS, igual que las cajas) y luego se va arriba.
     //    Se conmutan clases .in/.out en vez de scrubbear por scroll → sin tirones.
     // TÍTULO + su círculo rojo (trigger): al entrar en .in el CSS dibuja el óvalo de una.
-    // CINCO TIEMPOS sobre un recorrido de 500vh (RECORRIDO).
+    // CINCO TIEMPOS sobre un recorrido de 430vh (entre paréntesis, el punto en vh).
     // Los tramos son largos A PROPÓSITO: con tramos cortos el texto entraba y
     // salía de golpe al scrollear y no daba tiempo a leerlo.
     // 1º) 0–20vh: la cabeza sola, sin nada de texto.
     // 2º) TÍTULO: entra a 20vh y se va arriba a 140vh (120vh para leerlo).
-    heroTitle.classList.toggle('in',  scrollN > vh(20) && scrollN < vh(140));
-    heroTitle.classList.toggle('out', scrollN >= vh(140));
+    heroTitle.classList.toggle('in',  scrollN > 0.047 && scrollN < 0.326);  // 20vh → 140vh
+    heroTitle.classList.toggle('out', scrollN >= 0.326);
 
     // 3º) CAJA IZQUIERDA: entra entera (eyebrow → titular → párrafo) entre 150 y 178vh.
-    blEy.classList.toggle('show', scrollN > vh(150));
-    blH .classList.toggle('show', scrollN > vh(162));
-    blP .classList.toggle('show', scrollN > vh(178));
+    blEy.classList.toggle('show', scrollN > 0.349);  // 150vh
+    blH .classList.toggle('show', scrollN > 0.377);  // 162vh
+    blP .classList.toggle('show', scrollN > 0.414);  // 178vh
     // 4º) CAJA DERECHA: no arranca hasta 215vh, con la izquierda ya puesta
     //     (37vh de respiro entre bloque y bloque: cada uno tiene su scroll).
-    brEy.classList.toggle('show', scrollN > vh(215));
-    brH .classList.toggle('show', scrollN > vh(227));
-    brP .classList.toggle('show', scrollN > vh(243));
+    brEy.classList.toggle('show', scrollN > 0.500);  // 215vh
+    brH .classList.toggle('show', scrollN > 0.528);  // 227vh
+    brP .classList.toggle('show', scrollN > 0.565);  // 243vh
     // 57vh para leer los dos bloques enteros y…
     // 5º) las DOS CAJAS SE DIFUMINAN a 300vh y el CTA entra a 320vh, ya con la
     //     pantalla limpia y la cabeza arriba (headY ha terminado en 272vh).
-    blBox.classList.toggle('blurred', scrollN > vh(300));
-    brBox.classList.toggle('blurred', scrollN > vh(300));
-    cta  .classList.toggle('show',    scrollN > vh(320));
-    video.classList.toggle('show',    scrollN > vh(320));  // entra con el CTA
-    // 160vh para quedarse en el CTA y el vídeo (antes 90vh: se pasaba muy
-    // rápido a la siguiente sección) y, ya en el borde, TODO el hero
+    blBox.classList.toggle('blurred', scrollN > 0.698);  // 300vh
+    brBox.classList.toggle('blurred', scrollN > 0.698);  // 300vh
+    cta  .classList.toggle('show',    scrollN > 0.744);  // 320vh
+    video.classList.toggle('show',    scrollN > 0.744);  // entra con el CTA
+    // 90vh para leer el CTA y pinchar el botón y, ya en el borde, TODO el hero
     // (CTA + cabeza) se difumina para entregarle la pantalla a testimonios: el
     // paso entre la 1ª y la 2ª pantalla es un degradado, no un corte. El umbral
     // va MUY al final a propósito: si se difumina antes, queda una pantalla
     // negra vacía esperando a que la sección suba.
-    const out = scrollN > vh(480);
+    const out = scrollN > 0.953;                         // 410vh
     cta  .classList.toggle('blurred', out);
     video.classList.toggle('blurred', out);
     stage.classList.toggle('blurred', out);
@@ -1392,7 +1379,7 @@
   const HEAD_Y_LOW = -0.85, HEAD_Y_HIGH = 0.85;
   const easeIO = t => t<0.5 ? 2*t*t : 1-Math.pow(-2*t+2,2)/2;
   function headY(n){
-    const t = clamp((n-vh(96))/vh(176), 0, 1);     // sube entre los 96vh y los 272vh
+    const t = clamp((n-0.223)/0.409, 0, 1);       // sube entre los ~96vh y los ~272vh (pista 430vh)
     let y = HEAD_Y_LOW + (HEAD_Y_HIGH-HEAD_Y_LOW)*easeIO(t);
     // 5º tiempo (nuevo, no toca los cuatro aprobados): entre 300 y 345vh sube
     // un poco MÁS para despejar el CTA, que ahora va debajo en la misma
@@ -1400,7 +1387,7 @@
     // deja un hueco muerto entre la cabeza y el mensaje.
     // en ancho basta un poco; en vertical el vídeo va DEBAJO de la cabeza, así
     // que tiene que subir mucho más para dejarle sitio a vídeo + CTA.
-    y += (wideLayout ? 0.12 : 2.3) * easeIO(clamp((n-vh(300))/vh(45), 0, 1));
+    y += (wideLayout ? 0.12 : 2.3) * easeIO(clamp((n-0.698)/0.105, 0, 1));
     return y;
   }
   let headYs = HEAD_Y_LOW;                         // valor suavizado
@@ -1416,7 +1403,7 @@
   const GAZE_X = 1.7;
   // avance del 5º tiempo (0 = como siempre, 1 = a la izquierda y mirada fija).
   // Mismo tramo que el resto del tiempo: 300 → 345vh.
-  const heroGaze = n => easeIO(clamp((n-vh(300))/vh(45), 0, 1));
+  const heroGaze = n => easeIO(clamp((n-0.698)/0.105, 0, 1));
 
   function tick(){
     const t = clock.getElapsedTime();
@@ -1749,31 +1736,16 @@
     var grid    = document.getElementById('cat-grid');
     if (!caja || !hueco || !grid) return;
 
+    var api = null;          // la API de Spotify cuando termina de cargar
     var mando = null;        // el controlador del reproductor ya creado
-    var listo = false;       // el iframe de Spotify ya terminó de cargar
-    var cargado = '';        // el tema que tiene montado ahora mismo
-    var pedido = '';         // tema pulsado antes de que el reproductor estuviera listo
+    var enEspera = null;     // lo que se pidió antes de que la API estuviera lista
     var sonando = null;      // el botón de la portada que está sonando
     var calentado = false;   // si ya se fue preparando la conexión con Spotify
 
-    // Spotify llama a esta función global al cargar su script. El reproductor
-    // se monta YA, escondido, con el tema pulsado o, si nadie ha pulsado aún,
-    // con el primero del catálogo: así al dar play el iframe (lo que más
-    // tardaba) ya está cargado y solo hay que cambiar de tema.
-    window.onSpotifyIframeApiReady = function(api){
-      var primero = grid.querySelector('.cover-play[data-uri]');
-      cargado = pedido || (primero && primero.dataset.uri) || '';
-      if (!cargado) return;
-      api.createController(hueco, {uri:cargado, width:'100%', height:80}, function(ctrl){
-        mando = ctrl;
-        ctrl.addListener('ready', function(){
-          if (listo) return;
-          listo = true;
-          if (pedido) suena(pedido);
-        });
-        // en cuanto suena algo, se apaga el aviso de "cargando"
-        ctrl.addListener('playback_update', function(){ apagaEspera(); });
-      });
+    // Spotify llama a esta función global al cargar su script
+    window.onSpotifyIframeApiReady = function(IFrameAPI){
+      api = IFrameAPI;
+      if (enEspera){ var p = enEspera; enEspera = null; arranca(p); }
     };
 
     function cargaApi(){
@@ -1814,22 +1786,20 @@
     grid.addEventListener('pointerenter', calienta, true);
     grid.addEventListener('touchstart', calienta, {passive:true});
 
-    function play(){ try { mando.play(); } catch(e){} }
-
-    function suena(uri){
-      pedido = '';
-      if (uri === cargado){ play(); return; }
-      cargado = uri;
-      mando.loadUri(uri);
-      // loadUri no arranca solo: se le da un instante para montar el tema
-      setTimeout(play, 350);
-    }
-
-    function arranca(uri){
-      if (listo){ suena(uri); return; }
-      // aún cargando: suena en cuanto el reproductor avise de que está listo
-      pedido = uri;
-      calienta();
+    function arranca(tema){
+      if (!api){ enEspera = tema; cargaApi(); return; }
+      if (mando){
+        mando.loadUri(tema.uri);
+        // loadUri no arranca solo: se le da un instante para montar el tema
+        setTimeout(function(){ try { mando.play(); } catch(e){} }, 350);
+        return;
+      }
+      api.createController(hueco, {uri:tema.uri, width:'100%', height:80}, function(ctrl){
+        mando = ctrl;
+        ctrl.addListener('ready', function(){ try { ctrl.play(); } catch(e){} });
+        // en cuanto suena algo, se apaga el aviso de "cargando"
+        ctrl.addListener('playback_update', function(){ apagaEspera(); });
+      });
     }
 
     function apagaEspera(){
@@ -1849,10 +1819,10 @@
       sonando = btn;
       btn.classList.add('sonando');
       // mientras Spotify monta el tema, el botón avisa de que está trabajando
-      if (!listo) btn.classList.add('cargando');
+      if (!mando) btn.classList.add('cargando');
       caja.hidden = false;
       document.body.classList.add('sp-abierto');
-      arranca(btn.dataset.uri);
+      arranca({uri: btn.dataset.uri});
       // por si el aviso de reproducción no llega (sesión cerrada, bloqueos…)
       setTimeout(apagaEspera, 6000);
     });
@@ -1883,7 +1853,7 @@
       // la línea vuelva a cero y se dibuje otra vez al llegar arriba.
       if (titulo){ titulo.classList.remove('in','out'); void titulo.offsetWidth; }
       var max = Math.max(1, track.offsetHeight - window.innerHeight);
-      window.scrollTo({top: Math.round(0.112 * max), behavior:'instant'});
+      window.scrollTo({top: Math.round(0.13 * max), behavior:'instant'});
     });
   })();
   </script>

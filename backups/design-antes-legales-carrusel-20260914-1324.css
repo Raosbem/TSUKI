@@ -45,12 +45,6 @@
 .footer-bottom a{display:inline-flex;align-items:center;min-height:44px;color:#c7bdb9;text-decoration:none}
 .footer-bottom a:hover{color:#fff}
 .site-footer a:focus-visible{outline:2px solid var(--tsuki-red);outline-offset:5px}
-/* enlaces legales: fila discreta al final del pie, en todas las páginas */
-.footer-legal{max-width:1400px;margin:14px auto 0;display:flex;flex-wrap:wrap;gap:4px 22px;
-    font-size:10px;letter-spacing:.09em;text-transform:uppercase}
-.site-footer .footer-legal a{display:inline-flex;align-items:center;min-height:36px;color:#8f8684;text-decoration:none}
-.site-footer .footer-legal a:hover,.site-footer .footer-legal a[aria-current]{color:#fff}
-.pagina-interior .footer-legal{justify-content:center;text-align:center}
 @media(max-width:760px){
   #testimonios{padding-top:90px;padding-bottom:48px}
   .tst-head{padding:0 6vw;margin-bottom:36px;text-align:left}
@@ -99,7 +93,7 @@ a.catalog-instruction:focus-visible{outline:2px solid var(--tsuki-red);outline-o
 /* CARRUSEL AUTOMÁTICO (marquee): la pista se desliza sola en bucle de izquierda
    a derecha y nunca se para salvo que haya una tarjeta abierta (.abierta, la
    pone el JS del index) o el usuario pida menos movimiento. Va de DERECHA a
-   IZQUIERDA a paso tranquilo (~40 px/s; antes 190s, se hacía lento). El set de tarjetas
+   IZQUIERDA y a paso lento (~28 px/s). El set de tarjetas
    se repite dentro de la pista, así que el salto del bucle no se ve.
    Ya no hay flechas ni contador: el movimiento es continuo. */
 .tst-row:focus-visible{outline:2px solid var(--tsuki-red);outline-offset:4px}
@@ -113,7 +107,7 @@ a.catalog-instruction:focus-visible{outline:2px solid var(--tsuki-red);outline-o
 #testimonios .tst-row::after{right:0;background:linear-gradient(270deg,#000,rgba(0,0,0,0))}
 #testimonios .tst-track{width:max-content;gap:24px;align-items:flex-start;
     will-change:transform;
-    animation:tstScroll 130s linear infinite;animation-direction:normal}
+    animation:tstScroll 190s linear infinite;animation-direction:normal}
 #testimonios .tst-row.abierta .tst-track{animation-play-state:paused}
 #testimonios .tst-track::after{content:none}
 #testimonios .tst-card{width:min(640px,64vw);padding:36px;border-radius:3px;background:#100e0e;border-color:#ffffff1a;box-shadow:none}
@@ -143,7 +137,7 @@ a.catalog-instruction:focus-visible{outline:2px solid var(--tsuki-red);outline-o
  .tst-head .sub,.cat-head .sub{font-size:13px}
  .tst-head{width:88%;margin-bottom:24px}
  #testimonios .tst-card{width:84vw;padding:24px}
- #testimonios .tst-track{gap:16px;animation-duration:90s}
+ #testimonios .tst-track{gap:16px;animation-duration:130s}
  .tst-av{width:56px;height:56px}
  .tst-name{font-size:18px}
  .tst-stars{font-size:9px;letter-spacing:1px}

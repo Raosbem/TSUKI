@@ -68,6 +68,15 @@ html,body{cursor:url("mouse-cursor.png") 1 0, auto}
     text-align:center;gap:16px}
 .pagina-interior .footer-bottom nav{justify-content:center}
 
+/* Páginas legales (aviso legal, privacidad, cookies…): de momento solo la
+   cabecera y un hueco vacío donde irá el texto cuando esté redactado. */
+.legal{position:relative;padding:clamp(104px,13vh,160px) 6vw 96px;min-height:72vh}
+.legal-body{max-width:1200px;margin:0 auto;color:#aba5a2;font-size:15px;line-height:1.8}
+@media (max-width:760px){
+  .legal{padding:94px 6vw 64px}
+  .legal .ct-head h2{font-size:clamp(46px,13vw,96px);margin:22px 0}
+}
+
 /* Sello de marca al final de la columna derecha, bajo el atajo de WhatsApp.
    Sin caja: la propia silueta del sticker es la forma, con una sombra suave
    para que no quede pegado al fondo negro. */
