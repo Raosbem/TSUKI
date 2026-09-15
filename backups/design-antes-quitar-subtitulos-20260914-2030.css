@@ -6,6 +6,7 @@
 #testimonios{padding-top:clamp(90px,14vh,160px);padding-bottom:80px;background:radial-gradient(ellipse at 50% 45%,#170c0c 0%,#000 68%)}
 .tst-head{max-width:1060px;margin-bottom:56px}
 .tst-head h2,.cat-head h2{font-weight:600;letter-spacing:-.045em;line-height:1.14;font-size:clamp(27px,3.5vw,48px);color:var(--tsuki-silver)}
+.tst-head .sub,.cat-head .sub{line-height:1.8;color:#a6a3a3;font-size:12px}
 .tst-card{background:linear-gradient(145deg,#161414,#0b0a0a);border-radius:16px;padding:26px;box-shadow:0 18px 45px #0005}
 .tst-av{width:62px;height:62px;border:1px solid #ffffff30}
 .tst-quote p{line-height:1.85}
@@ -83,16 +84,11 @@
 .tst-head{width:88%;position:relative;padding-top:32px;border-top:1px solid #ffffff20}
 .tst-head h2,.cat-head h2{font-family:var(--tsuki-display);font-weight:700;font-size:clamp(76px,10vw,144px);line-height:.84;letter-spacing:-.025em;text-transform:uppercase;margin:32px 0}
 .tst-head h2 span,.cat-head h2 span{color:#a8453d}
+.tst-head .sub,.cat-head .sub{font-size:14px;line-height:1.8;max-width:460px;color:#aba5a2}
 .section-label,.catalog-instruction,.track-number{font-family:"Courier New",monospace;font-weight:400;letter-spacing:.14em}
-/* flex-wrap: la etiqueta del catálogo lleva ahora el enlace a la playlist y en
-   pantallas estrechas tiene que poder partirse en dos líneas en vez de salirse */
-.section-label{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;color:#bca9a3}
+.section-label{display:flex;align-items:center;gap:12px;color:#bca9a3}
 .section-label::before{content:"";width:6px;height:6px;background:var(--tsuki-red);flex-shrink:0}
 .catalog-instruction{display:inline-block;margin-top:18px;font-size:10px;color:#d5c9c3}
-/* el enlace vive ahora dentro de la etiqueta "03 / HECHO EN TSUKIBOYZ", así que
-   ahí no lleva ni margen propio ni tamaño propio: hereda los de la etiqueta */
-.section-label .catalog-instruction{margin-top:0;font-size:inherit;line-height:1}
-.section-label .lbl-sep{color:#6b605d;flex:0 0 auto}
 /* "ESCUCHA EN SPOTIFY ↗" es un enlace real a la playlist del colectivo */
 a.catalog-instruction{text-decoration:none;cursor:pointer;
     border-bottom:1px solid #ffffff2e;padding-bottom:3px;
@@ -138,8 +134,13 @@ a.catalog-instruction:focus-visible{outline:2px solid var(--tsuki-red);outline-o
 #topmenu .tm-btn{letter-spacing:.11em}
 .footer-contact{border-radius:4px}
 .footer-wordmark{font-family:var(--tsuki-display);font-size:clamp(64px,19vw,280px);letter-spacing:-.025em;font-weight:700}
+@media(min-width:1100px){
+ .tst-head .sub,.cat-head .sub{position:absolute;right:0;bottom:0;max-width:330px}
+ .cat-head{position:relative}
+}
 @media(max-width:760px){
  .tst-head h2,.cat-head h2{font-size:clamp(64px,18vw,108px);margin:26px 0;line-height:.88}
+ .tst-head .sub,.cat-head .sub{font-size:13px}
  .tst-head{width:88%;margin-bottom:24px}
  #testimonios .tst-card{width:84vw;padding:24px}
  #testimonios .tst-track{gap:16px;animation-duration:90s}

@@ -1,11 +1,12 @@
 /* Presentation only: independent of the hero scroll and 3D logic. */
-:root{--tsuki-red:#c7463f;--tsuki-silver:#ece9e4;--tsuki-verde:#57c26a}
+:root{--tsuki-red:#c7463f;--tsuki-silver:#ece9e4}
 ::selection{background:#ab3530;color:#fff}
 #testimonios,#catalogo{scroll-margin-top:90px}
 .section-label{font-size:10px;font-weight:700;letter-spacing:.2em;line-height:1.6;color:#c77d76;margin-bottom:24px}
 #testimonios{padding-top:clamp(90px,14vh,160px);padding-bottom:80px;background:radial-gradient(ellipse at 50% 45%,#170c0c 0%,#000 68%)}
 .tst-head{max-width:1060px;margin-bottom:56px}
 .tst-head h2,.cat-head h2{font-weight:600;letter-spacing:-.045em;line-height:1.14;font-size:clamp(27px,3.5vw,48px);color:var(--tsuki-silver)}
+.tst-head .sub,.cat-head .sub{line-height:1.8;color:#a6a3a3;font-size:12px}
 .tst-card{background:linear-gradient(145deg,#161414,#0b0a0a);border-radius:16px;padding:26px;box-shadow:0 18px 45px #0005}
 .tst-av{width:62px;height:62px;border:1px solid #ffffff30}
 .tst-quote p{line-height:1.85}
@@ -83,16 +84,11 @@
 .tst-head{width:88%;position:relative;padding-top:32px;border-top:1px solid #ffffff20}
 .tst-head h2,.cat-head h2{font-family:var(--tsuki-display);font-weight:700;font-size:clamp(76px,10vw,144px);line-height:.84;letter-spacing:-.025em;text-transform:uppercase;margin:32px 0}
 .tst-head h2 span,.cat-head h2 span{color:#a8453d}
+.tst-head .sub,.cat-head .sub{font-size:14px;line-height:1.8;max-width:460px;color:#aba5a2}
 .section-label,.catalog-instruction,.track-number{font-family:"Courier New",monospace;font-weight:400;letter-spacing:.14em}
-/* flex-wrap: la etiqueta del catálogo lleva ahora el enlace a la playlist y en
-   pantallas estrechas tiene que poder partirse en dos líneas en vez de salirse */
-.section-label{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;color:#bca9a3}
+.section-label{display:flex;align-items:center;gap:12px;color:#bca9a3}
 .section-label::before{content:"";width:6px;height:6px;background:var(--tsuki-red);flex-shrink:0}
 .catalog-instruction{display:inline-block;margin-top:18px;font-size:10px;color:#d5c9c3}
-/* el enlace vive ahora dentro de la etiqueta "03 / HECHO EN TSUKIBOYZ", así que
-   ahí no lleva ni margen propio ni tamaño propio: hereda los de la etiqueta */
-.section-label .catalog-instruction{margin-top:0;font-size:inherit;line-height:1}
-.section-label .lbl-sep{color:#6b605d;flex:0 0 auto}
 /* "ESCUCHA EN SPOTIFY ↗" es un enlace real a la playlist del colectivo */
 a.catalog-instruction{text-decoration:none;cursor:pointer;
     border-bottom:1px solid #ffffff2e;padding-bottom:3px;
@@ -138,8 +134,13 @@ a.catalog-instruction:focus-visible{outline:2px solid var(--tsuki-red);outline-o
 #topmenu .tm-btn{letter-spacing:.11em}
 .footer-contact{border-radius:4px}
 .footer-wordmark{font-family:var(--tsuki-display);font-size:clamp(64px,19vw,280px);letter-spacing:-.025em;font-weight:700}
+@media(min-width:1100px){
+ .tst-head .sub,.cat-head .sub{position:absolute;right:0;bottom:0;max-width:330px}
+ .cat-head{position:relative}
+}
 @media(max-width:760px){
  .tst-head h2,.cat-head h2{font-size:clamp(64px,18vw,108px);margin:26px 0;line-height:.88}
+ .tst-head .sub,.cat-head .sub{font-size:13px}
  .tst-head{width:88%;margin-bottom:24px}
  #testimonios .tst-card{width:84vw;padding:24px}
  #testimonios .tst-track{gap:16px;animation-duration:90s}
@@ -204,112 +205,17 @@ a.catalog-instruction:focus-visible{outline:2px solid var(--tsuki-red);outline-o
 .plan-head .sub,.ct-head .sub{font-size:14px;line-height:1.8;max-width:460px;color:#aba5a2;margin-top:0}
 .plan-note{margin:26px 0 0;font-size:12px;letter-spacing:.02em;color:#8f8886}
 
-/* la tarjeta ya no va centrada: se pega a la izquierda (alineada con el titular)
-   y deja sitio a la derecha para el aviso de lanzamiento. */
-.plan-layout{position:relative;z-index:1;max-width:1200px;margin:0 auto;
-    display:grid;grid-template-columns:minmax(0,1fr) minmax(0,340px);
-    gap:clamp(22px,2.6vw,42px);align-items:start}
-.plan-card{border:1px solid #ffffff1c;border-radius:20px;
+.plan-card{max-width:900px;margin:0 auto;border:1px solid #ffffff1c;border-radius:20px;
     background:linear-gradient(150deg,#141010,#0a0909);
     padding:44px 48px;box-shadow:0 30px 70px -30px #0009}
-.plan-card-head{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;
-    gap:26px 14px;padding-bottom:36px;margin-bottom:8px;border-bottom:1px solid #ffffff1c}
+.plan-card-head{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;
+    gap:14px;padding-bottom:32px;margin-bottom:8px;border-bottom:1px solid #ffffff1c}
 .plan-card-label{font:10px "Courier New",monospace;font-weight:700;letter-spacing:.2em;
     text-transform:uppercase;color:#bca9a3}
-.plan-card-label.es-verde{color:var(--tsuki-verde)}
-.plan-antes{margin:0;display:flex;flex-direction:column;align-items:flex-start;gap:14px}
-.plan-price{display:flex;flex-direction:column;align-items:flex-end;gap:14px;margin:0}
-.precio-fila{display:flex;align-items:baseline;gap:18px}
+.plan-price{display:flex;align-items:baseline;gap:10px}
 .plan-price .amount{font-family:var(--tsuki-display);font-weight:700;
     font-size:clamp(40px,5.5vw,64px);color:var(--tsuki-silver);line-height:1}
 .plan-price .period{font-size:15px;color:#a6a3a3}
-.antes-fila{display:flex;align-items:baseline;gap:13px}
-/* el número va claro y la X fina: si no, el trazo se come los dígitos y no se
-   lee que antes costaba 600 */
-.plan-antes .cifra{font-family:var(--tsuki-display);font-weight:700;
-    font-size:clamp(38px,4vw,52px);color:#cfc8c5;line-height:1;
-    text-decoration:none;display:block}
-.plan-antes .period{font-size:13px;color:#8f8886;white-space:nowrap}
-
-/* ---- TRAZOS DE PLUMÓN sobre los precios ----
-   Mismo lenguaje que el subrayado del título del hero: SVG encima del texto,
-   trazo de grosor fijo (non-scaling-stroke) que se dibuja solo al entrar en
-   pantalla. La X roja cancela el precio viejo; el círculo verde señala el nuevo. */
-.tachado,.rodeado{position:relative;display:inline-block}
-.marca{position:absolute;overflow:visible;pointer-events:none}
-.marca path{fill:none;vector-effect:non-scaling-stroke;
-    stroke-linecap:round;stroke-linejoin:round;
-    stroke-dasharray:1;stroke-dashoffset:1;
-    transition:stroke-dashoffset .62s cubic-bezier(.65,0,.35,1)}
-.marca-x{left:-13%;top:0;width:126%;height:100%}
-.marca-x path{stroke:#ab3530;stroke-width:2.8}
-.marca-circulo{left:-17%;top:-30%;width:134%;height:166%}
-.marca-circulo path{stroke:var(--tsuki-verde);stroke-width:3.6;
-    filter:drop-shadow(0 0 4px rgba(87,194,106,.18))}
-/* la flecha sí va en el flujo normal, entre los dos precios */
-.plan-flecha{margin:0 0 8px;display:flex;flex-direction:column;align-items:center;
-    gap:13px;flex:0 0 auto}
-.marca-flecha{position:relative;width:clamp(76px,8.5vw,118px);height:34px;flex:0 0 auto}
-.marca-flecha path{stroke:var(--tsuki-silver);stroke-width:3;
-    filter:drop-shadow(0 0 5px rgba(236,233,228,.2))}
-.plan-card-label.es-blanco{color:var(--tsuki-silver);
-    opacity:0;transform:translateY(5px);
-    transition:opacity .45s ease,transform .45s ease}
-/* el trazo se dibuja cuando la tarjeta entra en pantalla: primero se tacha el
-   600 y, un momento después, se rodea el 450 */
-.plan-card-head.dibuja .marca path{stroke-dashoffset:0}
-.plan-card-head.dibuja .marca-x path{transition-delay:.12s}
-.plan-card-head.dibuja .marca-x path:nth-child(2){transition-delay:.3s}
-/* luego la flecha (palo y punta) y, al final, el círculo del precio nuevo */
-.plan-card-head.dibuja .plan-card-label.es-blanco{opacity:1;transform:none;
-    transition-delay:.46s}
-.plan-card-head.dibuja .marca-flecha path{transition-delay:.54s}
-.plan-card-head.dibuja .marca-flecha path:nth-child(2){transition-delay:.72s}
-.plan-card-head.dibuja .marca-flecha path:nth-child(3){transition-delay:.78s}
-.plan-card-head.dibuja .marca-circulo path{transition-delay:.92s}
-
-/* ---- AVISO DE OFERTA DE LANZAMIENTO (a la derecha de la tarjeta) ---- */
-.plan-promo{border:1px solid rgba(171,53,48,.34);border-radius:20px;
-    background:linear-gradient(158deg,rgba(58,17,15,.72),rgba(14,9,9,.94));
-    padding:30px 28px 32px;box-shadow:0 30px 70px -34px #000c}
-.promo-label{display:flex;align-items:center;gap:9px;margin:0;
-    font:10px "Courier New",monospace;font-weight:700;letter-spacing:.2em;
-    text-transform:uppercase;color:#d9a9a3}
-.promo-punto{width:6px;height:6px;flex:0 0 auto;background:var(--tsuki-red);
-    animation:promoLatido 2.4s ease-out infinite}
-@keyframes promoLatido{
-  0%{box-shadow:0 0 0 0 rgba(199,70,63,.5)}
-  70%{box-shadow:0 0 0 10px rgba(199,70,63,0)}
-  100%{box-shadow:0 0 0 0 rgba(199,70,63,0)}
-}
-.promo-title{font-family:var(--tsuki-display);font-weight:700;
-    font-size:clamp(34px,3.4vw,46px);line-height:.9;letter-spacing:-.02em;
-    text-transform:uppercase;color:var(--tsuki-silver);margin:20px 0 18px}
-.promo-title span{color:#c2524a}
-.promo-text{margin:0;font-size:13.5px;line-height:1.72;color:#b6afac}
-.promo-text strong{color:var(--tsuki-silver);font-weight:600}
-.promo-datos{list-style:none;margin:22px 0 0;padding:18px 0 0;
-    border-top:1px solid rgba(255,255,255,.12);display:grid;gap:12px}
-.promo-datos li{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
-.promo-datos span{font:10px "Courier New",monospace;font-weight:700;letter-spacing:.16em;
-    text-transform:uppercase;color:#8f8886}
-.promo-datos b{font-family:var(--tsuki-display);font-weight:700;font-size:20px;
-    color:var(--tsuki-silver);line-height:1}
-.promo-datos li:first-child b{color:var(--tsuki-verde)}
-.promo-pie{margin:22px 0 0;font-size:11.5px;line-height:1.66;color:#8a8380}
-
-/* botón bajo el aviso: mismo lenguaje que el de enviar del formulario */
-.plan-aparte{display:grid;gap:16px;align-content:start}
-.promo-cta{display:flex;align-items:center;justify-content:center;gap:12px;
-    text-decoration:none;font-weight:700;font-size:14px;color:#fff;
-    background:#ab3530;border-radius:999px;padding:18px 26px;min-height:56px;
-    box-shadow:0 16px 40px -16px rgba(171,53,48,.85);
-    transition:background .25s ease,transform .25s ease,box-shadow .25s ease}
-.promo-cta:hover{background:#c23d37;transform:translateY(-2px);
-    box-shadow:0 20px 46px -16px rgba(171,53,48,.95)}
-.promo-cta:focus-visible{outline:2px solid #fff;outline-offset:3px}
-.promo-cta .flecha{transition:transform .25s ease}
-.promo-cta:hover .flecha{transform:translateX(4px)}
 .plan-features{list-style:none;margin:0;padding:0}
 .plan-features li{display:flex;align-items:center;gap:20px;padding:26px 0;
     border-bottom:1px solid #ffffff14;color:#d8d3d0;
@@ -326,38 +232,16 @@ a.catalog-instruction:focus-visible{outline:2px solid var(--tsuki-red);outline-o
 .plan-features li:last-child{border-bottom:0;padding-bottom:6px}
 .plan-features .dash{flex:0 0 auto;width:20px;height:2px;background:var(--tsuki-red)}
 
-/* cuando ya no caben lado a lado, el aviso pasa a ir debajo de la tarjeta */
-@media(max-width:1040px){
-  .plan-layout{grid-template-columns:minmax(0,1fr)}
-  .plan-aparte{max-width:620px}
-  .promo-title{font-size:clamp(32px,6vw,42px)}
-}
 @media(max-width:760px){
   #plan{padding:72px 6vw 56px}
   .plan-head{margin-bottom:32px;padding-top:28px}
   .plan-head h2{font-size:clamp(54px,16vw,96px);margin:22px 0}
   .plan-card{padding:28px 22px}
+  .plan-card-head{padding-bottom:22px;gap:10px}
   .plan-features li{padding:20px 0;gap:14px;font-size:14px}
-  .plan-promo{padding:26px 22px 28px}
-  .precio-fila{gap:12px}
-  /* los dos precios pasan a ir uno debajo del otro, alineados a la izquierda:
-     el círculo verde necesita aire y en fila se quedaría sin sitio. La flecha
-     se inclina para seguir señalando del precio viejo al nuevo. */
-  .plan-card-head{flex-direction:column;align-items:flex-start;
-      gap:22px;padding-bottom:26px}
-  .plan-price{align-items:flex-start}
-  .plan-flecha{flex-direction:row;align-items:center;gap:16px;margin:0 0 0 6px}
-  .marca-flecha{width:70px;height:30px;transform:rotate(26deg)}
 }
 @media(prefers-reduced-motion:reduce){
   .plan-card{transition:none}
-  .promo-punto{animation:none}
-  .promo-cta,.promo-cta .flecha{transition:none}
-  .promo-cta:hover{transform:none}
-  .promo-cta:hover .flecha{transform:none}
-  /* sin animación de dibujado: los trazos salen ya puestos */
-  .marca path{transition:none;stroke-dashoffset:0}
-  .plan-card-label.es-blanco{transition:none;opacity:1;transform:none}
 }
 
 /* ================= CONTACTO: formulario + redes =================

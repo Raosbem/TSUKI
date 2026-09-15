@@ -396,6 +396,8 @@
   .cat-head h2{font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue","Segoe UI",Arial,sans-serif;
       color:#dfdfdf;font-weight:600;letter-spacing:-.02em;line-height:1.16;
       font-size:clamp(24px,3.2vw,40px)}
+  .cat-head .sub{margin-top:16px;color:#9aa0a8;font-weight:400;
+      font-size:clamp(13px,1.05vw,16px)}
 
   /* GUILLEMETS «» rojos (banderitas) flanqueando TODA la frase → marca que es
      subapartado sin competir con el hero. Aparecen animándose al entrar la sección. */
@@ -493,6 +495,8 @@
   .tst-head h2{font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue","Segoe UI",Arial,sans-serif;
       color:#dfdfdf;font-weight:600;letter-spacing:-.02em;line-height:1.16;
       font-size:clamp(24px,3.2vw,40px)}
+  .tst-head .sub{margin-top:16px;color:#9aa0a8;font-weight:400;
+      font-size:clamp(13px,1.05vw,16px)}
   /* las banderitas del subapartado también animan al entrar la sección */
   #testimonios.in .guill{opacity:1;transform:none}
   #testimonios.in .guill-close{transition-delay:.08s}
@@ -581,7 +585,7 @@
     .tst-card{padding-bottom:20px}
   }
 </style>
-<link rel="stylesheet" href="assets/design.css?v=13">
+<link rel="stylesheet" href="assets/design.css?v=9">
 </head>
 <body id="inicio">
   <!-- FONDO: capas detrás del canvas 3D. Da profundidad/textura sin tocar el hero.
@@ -697,48 +701,10 @@
       <h2>Un plan mensual.<br><span>Todo incluido.</span></h2>
       <p class="sub">Un solo pago fijo cada mes. Un equipo completo trabajando en tu proyecto de principio a fin.</p>
     </div>
-    <!-- La tarjeta se va a la izquierda y a su derecha entra el aviso de la
-         oferta de lanzamiento. En pantallas estrechas se apilan (ver design.css). -->
-    <div class="plan-layout">
     <div class="plan-card">
       <div class="plan-card-head">
-        <!-- precio de siempre, tachado con una X de plumón rojo -->
-        <p class="plan-antes">
-          <span class="plan-card-label">Precio normal</span>
-          <span class="antes-fila">
-            <span class="tachado">
-              <s class="cifra">$600</s>
-              <svg class="marca marca-x" viewBox="0 0 130 52" preserveAspectRatio="none" aria-hidden="true">
-                <path pathLength="1" d="M6,8 C42,19 74,31 124,44"/>
-                <path pathLength="1" d="M124,9 C88,21 46,33 6,45"/>
-              </svg>
-            </span>
-            <span class="period">USD / mes</span>
-          </span>
-        </p>
-        <!-- flecha de plumón blanca: señala el salto de un precio al otro.
-             Decorativa: lo que dice ya lo cuentan las etiquetas de cada precio. -->
-        <p class="plan-flecha" aria-hidden="true">
-          <span class="plan-card-label es-blanco">Ahora</span>
-          <svg class="marca marca-flecha" viewBox="0 0 120 48" preserveAspectRatio="none">
-            <path pathLength="1" d="M6,27 C34,20 68,32 108,24"/>
-            <path pathLength="1" d="M88,10 C96,15 103,20 109,24"/>
-            <path pathLength="1" d="M90,39 C98,34 104,29 109,25"/>
-          </svg>
-        </p>
-        <!-- precio de lanzamiento, rodeado con un círculo de plumón verde -->
-        <p class="plan-price">
-          <span class="plan-card-label es-verde">Por lanzamiento</span>
-          <span class="precio-fila">
-            <span class="rodeado">
-              <span class="amount">$450</span>
-              <svg class="marca marca-circulo" viewBox="0 0 170 96" preserveAspectRatio="none" aria-hidden="true">
-                <path pathLength="1" d="M118,12 C88,3 50,2 28,14 C8,26 4,52 20,70 C38,88 92,94 128,82 C156,72 168,48 150,28 C140,17 120,10 96,7"/>
-              </svg>
-            </span>
-            <span class="period">USD / mes</span>
-          </span>
-        </p>
+        <p class="plan-card-label">Plan mensual</p>
+        <p class="plan-price"><span class="amount">$450</span><span class="period">USD / mes</span></p>
       </div>
       <ul class="plan-features">
         <li><span class="dash" aria-hidden="true"></span>Canciones ilimitadas dentro del mes</li>
@@ -752,51 +718,7 @@
       </ul>
       <p class="plan-note">Precio en dólares estadounidenses (USD) por mes.</p>
     </div>
-
-    <!-- AVISO DE LANZAMIENTO: acompaña a la tarjeta por la derecha y explica
-         que los $450 son temporales. Debajo, el botón que lleva a contacto. -->
-    <div class="plan-aparte">
-    <aside class="plan-promo" aria-label="Oferta de lanzamiento">
-      <p class="promo-label"><span class="promo-punto" aria-hidden="true"></span>Oferta de lanzamiento</p>
-      <p class="promo-title">Cupos<br><span>limitados.</span></p>
-      <p class="promo-text">Los <strong>$450 USD</strong> son un precio de apertura, solo durante
-        este primer mes de lanzamiento del servicio. Cuando termine, el plan vuelve
-        a su precio normal de <strong>$600 USD</strong>.</p>
-      <ul class="promo-datos">
-        <li><span>Descuento</span><b>&minus;25%</b></li>
-        <li><span>Vigencia</span><b>Primer mes</b></li>
-      </ul>
-      <p class="promo-pie">Tomamos un número limitado de artistas al mes: es la única forma
-        de darle a cada proyecto el tiempo que necesita.</p>
-    </aside>
-      <a class="promo-cta" href="contacto.html">Quiero separar mi cupo<span class="flecha" aria-hidden="true">&rarr;</span></a>
-    </div>
-    </div>
   </section>
-
-  <!-- Los trazos de plumón de los precios se dibujan cuando la tarjeta asoma,
-       igual que el subrayado del título del hero. Con ?reveal, sin
-       IntersectionObserver o con reduced-motion salen ya puestos. -->
-  <script>
-  (function(){
-    var head = document.querySelector('.plan-card-head');
-    if (!head) return;
-    var force  = location.search.includes('reveal');
-    var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (force || reduce || !('IntersectionObserver' in window)){
-      head.classList.add('dibuja');
-      return;
-    }
-    var obs = new IntersectionObserver(function(es){
-      es.forEach(function(e){
-        if (!e.isIntersecting) return;
-        head.classList.add('dibuja');
-        obs.disconnect();
-      });
-    }, {threshold:.45});
-    obs.observe(head);
-  })();
-  </script>
 
   <!-- ====== TESTIMONIOS: carrusel (marquee) de reseñas. Va PRIMERO tras el hero:
        es la sección que sube y lo cubre, y la que lleva el velo de fundido. ====== -->
@@ -804,6 +726,7 @@
     <div class="tst-head">
       <p class="section-label">02 / EN SUS PALABRAS</p>
       <h2>Los artistas<br><span>hablan.</span></h2>
+      <p class="sub">Las voces detr&#225;s de la m&#250;sica.<br>Selecciona una tarjeta para leer su experiencia completa.</p>
     </div>
     <div class="tst-row" id="artist-stories" data-dir="r" role="region" aria-label="Experiencias de artistas"><div class="tst-track" aria-hidden="false"></div></div>
   </section>
@@ -811,8 +734,9 @@
   <!-- ====== CATÁLOGO: rejilla de portadas, tras los testimonios ====== -->
   <section id="catalogo">
     <div class="cat-head">
-      <p class="section-label">03 / HECHO EN TSUKIBOYZ<span class="lbl-sep" aria-hidden="true">|</span><a class="catalog-instruction" href="https://open.spotify.com/playlist/6JuN8VSuQIBpcRzFZKrK5r?si=230faf27c7ee476b" target="_blank" rel="noopener" aria-label="Escuchar la playlist de Tsukiboyz en Spotify">ESCUCHA EN SPOTIFY &#8599;</a></p>
+      <p class="section-label">03 / HECHO EN TSUKIBOYZ</p>
       <h2>Nuestro<br><span>sonido.</span></h2>
+      <p class="sub">Una selecci&#243;n de temas producidos, mezclados y masterizados por nuestro equipo.<br><a class="catalog-instruction" href="https://open.spotify.com/playlist/6JuN8VSuQIBpcRzFZKrK5r?si=230faf27c7ee476b" target="_blank" rel="noopener" aria-label="Escuchar la playlist de Tsukiboyz en Spotify">ESCUCHA EN SPOTIFY &#8599;</a></p>
     </div>
     <div class="cat-grid" id="cat-grid"></div>
   </section>

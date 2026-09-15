@@ -44,6 +44,7 @@ Both the catalog and testimonials scripts reveal their section via `Intersection
 - **Featured video**: the `data-yt` attribute on `<div id="video">`.
 - **WhatsApp CTA link**: the `href` on `.cta-btn` inside `<div id="cta">`.
 - **Hero copy**: `#hero-title`, `#copy-bl`, `#copy-br` markup near the top of `<body>`.
+- **Price and launch offer**: `.plan-card-head` inside `<section id="plan">`. It shows the regular price (`$600`, crossed out by the red marker `svg.marca-x`) beside the launch price (`$450`, ringed by the green marker `svg.marca-circulo`); both strokes are drawn by an `IntersectionObserver` that adds `.dibuja`. **When the launch month ends**, drop the `.plan-antes` block and the `.rodeado`/`svg` wrapper around the amount, set the amount back to the regular price, and delete the whole `<div class="plan-aparte">` next to the card (the `.plan-promo` notice plus its `.promo-cta` button to `contacto.html`) — `.plan-layout` then only needs its second grid column removed in `design.css`.
 
 ## Portable 3D loading
 
