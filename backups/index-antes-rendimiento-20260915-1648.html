@@ -13,20 +13,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<!-- El modelo 3D es lo más pesado de la primera visita y es lo que hace esperar
-     en la pantalla de carga. Sin esto no empieza a bajar hasta que THREE.js y
-     GLTFLoader se han descargado Y ejecutado; con esto sale pedido desde la
-     primera línea del HTML, en paralelo. Solo aplica sobre http(s): al abrir el
-     archivo suelto el modelo viene del .embedded.js y esta petición sobraría. -->
-<script>
-  if (location.protocol !== 'file:') {
-    var pre = document.createElement('link');
-    pre.rel = 'preload'; pre.as = 'fetch';
-    pre.href = 'assets/cabeza-opt.glb';
-    pre.crossOrigin = 'anonymous';   // debe coincidir con el fetch de THREE.FileLoader
-    document.head.appendChild(pre);
-  }
-</script>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
   html,body{background:#000;color:#fff;font-family:"Plus Jakarta Sans",-apple-system,"Helvetica Neue",Arial,sans-serif;overflow-x:hidden}
@@ -1669,18 +1655,6 @@
     var grid = document.getElementById('cat-grid');
     if (!grid) return;
     var html = '';
-    // Las portadas están en .jpg y en .webp (mismo recorte, misma resolución;
-    // el webp pesa un 24% menos). Se pregunta UNA vez si el navegador sabe
-    // pintar webp y se usa esa extensión para todas; el que no sepa (Safari
-    // antiguo) se queda con el .jpg de siempre. Como la rejilla la construye
-    // este script, elegir aquí no retrasa nada.
-    var EXT = '.jpg';
-    try {
-      var lienzo = document.createElement('canvas');
-      lienzo.width = lienzo.height = 1;
-      if (lienzo.toDataURL('image/webp').indexOf('data:image/webp') === 0) EXT = '.webp';
-    } catch(e){}
-
     for (var k=0;k<WORKS.length;k++){
       var f=WORKS[k][0], t=WORKS[k][1], u=WORKS[k][2], arts=WORKS[k][3];
       var et = esc(t);
@@ -1694,8 +1668,7 @@
       var m = /\/(track|album)\/([A-Za-z0-9]+)/.exec(u);
       var uri = m ? 'spotify:'+m[1]+':'+m[2] : '';
       html += '<div class="cover">'
-           +  '<img src="assets/portadas/'+f+EXT+'" alt="'+et+'" width="640" height="640"'
-           +     ' loading="lazy" decoding="async">'
+           +  '<img src="assets/portadas/'+f+'.jpg" alt="'+et+'" loading="lazy">'
            +  '<span class="scrim" aria-hidden="true"></span>'
            + (uri
               ? '<button class="cover-play" type="button" data-uri="'+uri+'"'
@@ -2092,8 +2065,6 @@
   })();
   </script>
 
-  <!-- assets/design.js ya no se carga: quedó sin una sola línea de código (solo
-       el comentario que explica que el carrusel pasó a ser un marquee de CSS).
-       El archivo se conserva porque las copias de backups/ lo siguen pidiendo. -->
+  <script src="assets/design.js?v=6"></script>
 </body>
 </html>

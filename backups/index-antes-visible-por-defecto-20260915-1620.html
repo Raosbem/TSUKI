@@ -13,20 +13,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<!-- El modelo 3D es lo más pesado de la primera visita y es lo que hace esperar
-     en la pantalla de carga. Sin esto no empieza a bajar hasta que THREE.js y
-     GLTFLoader se han descargado Y ejecutado; con esto sale pedido desde la
-     primera línea del HTML, en paralelo. Solo aplica sobre http(s): al abrir el
-     archivo suelto el modelo viene del .embedded.js y esta petición sobraría. -->
-<script>
-  if (location.protocol !== 'file:') {
-    var pre = document.createElement('link');
-    pre.rel = 'preload'; pre.as = 'fetch';
-    pre.href = 'assets/cabeza-opt.glb';
-    pre.crossOrigin = 'anonymous';   // debe coincidir con el fetch de THREE.FileLoader
-    document.head.appendChild(pre);
-  }
-</script>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
   html,body{background:#000;color:#fff;font-family:"Plus Jakarta Sans",-apple-system,"Helvetica Neue",Arial,sans-serif;overflow-x:hidden}
@@ -437,13 +423,9 @@
   .cover{position:relative;aspect-ratio:1/1;overflow:hidden;
       background:#0a0a0a;
       box-shadow:0 14px 30px -12px rgba(0,0,0,.82);
+      opacity:0;transform:translateY(42px);
       transition:opacity .7s ease, transform .7s cubic-bezier(.22,1,.36,1)}
-  /* misma seguridad que en los testimonios: las portadas se ven por defecto y
-     solo parten de invisibles si el JS marcó la sección con .js-anim */
-  /* sin #id a propósito: con el id ganarían al :hover de abajo y se perdería
-     la elevación al pasar el ratón */
-  .js-anim .cover{opacity:0;transform:translateY(42px)}
-  .js-anim .cover.in{opacity:1;transform:none}
+  .cover.in{opacity:1;transform:none}
   /* al pasar el ratón se ELEVA un poco (solo transform → GPU, sin repintar sombra) */
   .cover.in:hover{transform:translateY(-6px)}
   .cover img{position:relative;z-index:0;width:100%;height:100%;object-fit:cover;display:block;
@@ -525,7 +507,8 @@
   .tst-row::after{right:0;background:linear-gradient(270deg,#000,rgba(0,0,0,0))}
   /* la pista: ancho por contenido, se duplica el set → loop sin salto */
   .tst-track{display:flex;gap:18px;width:max-content;align-items:flex-start;
-      animation:tstScroll 92s linear infinite}
+      will-change:transform;animation:tstScroll 92s linear infinite}
+  .tst-row[data-dir="r"] .tst-track{animation-direction:reverse}
   /* el carrusel NO se para al pasar el ratón: sigue andando siempre. Solo se
      detiene cuando hay una tarjeta ABIERTA (clase .abierta, la pone el JS al
      pinchar), que es cuando hay que leerla entera y quieta. */
@@ -539,16 +522,11 @@
       border:1px solid rgba(223,223,223,.10);border-radius:16px;
       padding:20px 22px 0;
       box-shadow:0 16px 34px -18px rgba(0,0,0,.85);
+      opacity:0;transform:translateY(20px);
       transition:opacity .7s ease, transform .7s cubic-bezier(.22,1,.36,1),
                  border-color .35s ease, box-shadow .45s ease;
       overflow:hidden}
-  /* SEGURIDAD: las tarjetas se ven POR DEFECTO. Solo arrancan invisibles si el
-     JS marcó la sección con .js-anim, que significa "estoy vivo y yo me encargo
-     de encenderlas". Antes nacían con opacity:0 y dependían de que un disparo
-     acertara: si fallaba, el carrusel se quedaba en negro para siempre. Así lo
-     peor que puede pasar es perderse la animación de entrada. */
-  #testimonios.js-anim .tst-card{opacity:0;transform:translateY(20px)}
-  #testimonios.js-anim.in .tst-card{opacity:1;transform:none}
+  #testimonios.in .tst-card{opacity:1;transform:none}
   .tst-card{cursor:pointer}
   .tst-card:hover,
   .tst-card.open{border-color:rgba(171,53,48,.55);
@@ -603,7 +581,7 @@
     .tst-card{padding-bottom:20px}
   }
 </style>
-<link rel="stylesheet" href="assets/design.css?v=15">
+<link rel="stylesheet" href="assets/design.css?v=14">
 </head>
 <body id="inicio">
   <!-- FONDO: capas detrás del canvas 3D. Da profundidad/textura sin tocar el hero.
@@ -826,7 +804,7 @@
       <p class="section-label">02 / EN SUS PALABRAS</p>
       <h2>Los artistas<br><span>hablan.</span></h2>
     </div>
-    <div class="tst-row" id="artist-stories" role="region" aria-label="Experiencias de artistas"><div class="tst-track" aria-hidden="false"></div></div>
+    <div class="tst-row" id="artist-stories" data-dir="r" role="region" aria-label="Experiencias de artistas"><div class="tst-track" aria-hidden="false"></div></div>
   </section>
 
   <!-- ====== CATÁLOGO: rejilla de portadas, tras los testimonios ====== -->
@@ -847,6 +825,7 @@
     </div>
     <p class="footer-wordmark" aria-label="Tsukiboyz">TSUKIBOYZ<span aria-hidden="true">.</span></p>
     <div class="footer-bottom">
+      <span>PRODUCCI&#211;N / MEZCLA / MASTERING</span>
       <nav aria-label="Navegaci&#243;n al pie"><a href="#inicio">Volver arriba &#8593;</a></nav>
     </div>
     <nav class="footer-legal" aria-label="Informaci&#243;n legal">
@@ -1669,18 +1648,6 @@
     var grid = document.getElementById('cat-grid');
     if (!grid) return;
     var html = '';
-    // Las portadas están en .jpg y en .webp (mismo recorte, misma resolución;
-    // el webp pesa un 24% menos). Se pregunta UNA vez si el navegador sabe
-    // pintar webp y se usa esa extensión para todas; el que no sepa (Safari
-    // antiguo) se queda con el .jpg de siempre. Como la rejilla la construye
-    // este script, elegir aquí no retrasa nada.
-    var EXT = '.jpg';
-    try {
-      var lienzo = document.createElement('canvas');
-      lienzo.width = lienzo.height = 1;
-      if (lienzo.toDataURL('image/webp').indexOf('data:image/webp') === 0) EXT = '.webp';
-    } catch(e){}
-
     for (var k=0;k<WORKS.length;k++){
       var f=WORKS[k][0], t=WORKS[k][1], u=WORKS[k][2], arts=WORKS[k][3];
       var et = esc(t);
@@ -1694,8 +1661,7 @@
       var m = /\/(track|album)\/([A-Za-z0-9]+)/.exec(u);
       var uri = m ? 'spotify:'+m[1]+':'+m[2] : '';
       html += '<div class="cover">'
-           +  '<img src="assets/portadas/'+f+EXT+'" alt="'+et+'" width="640" height="640"'
-           +     ' loading="lazy" decoding="async">'
+           +  '<img src="assets/portadas/'+f+'.jpg" alt="'+et+'" loading="lazy">'
            +  '<span class="scrim" aria-hidden="true"></span>'
            + (uri
               ? '<button class="cover-play" type="button" data-uri="'+uri+'"'
@@ -1749,8 +1715,6 @@
     window.addEventListener('resize', comprueba);
     window.addEventListener('load', comprueba);
     comprueba();
-    setTimeout(revelar, 30000);        // último recurso, nunca en negro
-    cat.classList.add('js-anim');      // al final, igual que en testimonios
     vigilante = setInterval(function(){
       comprueba();
       if (++repasos > 66) clearInterval(vigilante);
@@ -1799,46 +1763,21 @@
         + '<div class="tst-quote"><p>«'+esc(t.q)+'»</p></div>'
         + '</article>';
     }
-    // Rellena la pista con el set DUPLICADO → bucle sin salto. Las dos mitades
-    // son idénticas porque el keyframe tstScroll recorre exactamente el 50%: al
-    // llegar al final ya está pintando lo mismo que al principio.
-    //
-    // Cuántas copias por mitad se decide MIDIENDO, no a ojo. Antes iban cuatro
-    // sets fijos y la pista salía de 10.600 px: una capa de GPU enorme que
-    // algunos navegadores no llegan a dibujar, y entonces el carrusel se ve
-    // vacío. Con la medida, en una pantalla normal basta un set por mitad y la
-    // pista baja a la mitad de ancho (y a la mitad de tarjetas que cargar).
+    // rellena una pista con el set (en el orden dado) DUPLICADO → loop sin salto
+    // La mitad izquierda y la derecha de la pista son idénticas, porque el
+    // keyframe tstScroll recorre exactamente el 50%: al llegar al final ya está
+    // pintando lo mismo que al principio y el bucle no da tirón. Cada mitad
+    // lleva el set DOS veces para que en pantallas muy anchas no quede hueco.
     function fill(track, order){
       var real='', copy='';
       order.forEach(function(i){ real += card(TST[i], false); copy += card(TST[i], true); });
-
-      track.innerHTML = real;                       // se mide UN set
-      var anchoSet = track.scrollWidth || 1;
-      // se cuenta con poder maximizar la ventana, no solo con el ancho de ahora
-      var visible = Math.max(
-        track.parentNode.getBoundingClientRect().width || 0,
-        window.screen ? window.screen.width : 0,
-        window.innerWidth || 0
-      );
-      // cada mitad tiene que tapar el ancho visible o se vería hueco al reiniciar
-      var porMitad = Math.max(1, Math.ceil((visible * 1.1) / anchoSet));
-
-      var mitad = real;
-      for (var n = 1; n < porMitad; n++) mitad += copy;   // 1ª mitad: real + copias
-      var clon = '';
-      for (var m = 0; m < porMitad; m++) clon += copy;    // 2ª mitad: misma anchura
-      track.innerHTML = mitad + clon;
-
-      // La animación recorre media pista, así que si la pista cambia de ancho
-      // cambia la velocidad. Se fija la duración a partir del recorrido real
-      // para que vaya SIEMPRE al mismo paso (~40 px/s), en portátil o en
-      // pantalla ancha. Con reduced-motion el CSS pone animation:none y esto
-      // no la reactiva (no hay animation-name que valga).
-      var recorrido = track.scrollWidth / 2;
-      track.style.animationDuration = Math.round(recorrido / 40) + 's';
+      var mitad = real + copy;                 // 1ª mitad: el set real + una copia
+      track.innerHTML = mitad + copy + copy;   // 2ª mitad: la misma anchura, clonada
     }
     var rows = document.querySelectorAll('#testimonios .tst-row');
     if (!rows.length) return;
+    // el set se repite 4 veces dentro de la pista para que, en pantallas anchas,
+    // nunca se vea hueco entre la última tarjeta y la primera del bucle.
     fill(rows[0].querySelector('.tst-track'), [0,1,2,3]);   // carrusel único →
 
     // ABRIR AL PINCHAR (antes bastaba con pasar el ratón por encima).
@@ -1909,16 +1848,6 @@
     window.addEventListener('resize', comprueba);
     window.addEventListener('load', comprueba);
     comprueba();                       // por si se recarga ya estando aquí
-    // ÚLTIMO RECURSO: pase lo que pase, a los 30 s se encienden. Si el visitante
-    // aún no ha llegado hasta aquí no ve la animación, pero tampoco la echa de
-    // menos; lo que no puede pasar es que el carrusel se quede en negro.
-    setTimeout(revelar, 30000);
-
-    // LO ÚLTIMO de todo: recién ahora se marca la sección como animable, que es
-    // lo que hace que el CSS esconda las tarjetas. Va al final a propósito: si
-    // algo de lo de arriba fallara, .js-anim no llega a ponerse y el carrusel
-    // se ve tal cual, sin animación de entrada, en vez de quedarse en negro.
-    sec.classList.add('js-anim');
     // Repaso cada 300 ms durante los primeros 20 s. Es el caso que rompía el
     // carrusel: si algo de arriba cambia de alto después de cargar (fuentes,
     // imágenes, el hero de 600vh), la sección puede entrar en pantalla SIN que
@@ -2092,8 +2021,6 @@
   })();
   </script>
 
-  <!-- assets/design.js ya no se carga: quedó sin una sola línea de código (solo
-       el comentario que explica que el carrusel pasó a ser un marquee de CSS).
-       El archivo se conserva porque las copias de backups/ lo siguen pidiendo. -->
+  <script src="assets/design.js?v=6"></script>
 </body>
 </html>

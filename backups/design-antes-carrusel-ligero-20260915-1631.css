@@ -115,10 +115,8 @@ a.catalog-instruction:focus-visible{outline:2px solid var(--tsuki-red);outline-o
     z-index:5;pointer-events:none}
 #testimonios .tst-row::before{left:0;background:linear-gradient(90deg,#000,rgba(0,0,0,0))}
 #testimonios .tst-row::after{right:0;background:linear-gradient(270deg,#000,rgba(0,0,0,0))}
-/* Sin will-change: la pista mide varios miles de píxeles de ancho y forzar una
-   capa de GPU permanente de ese tamaño es justo lo que hacía que a veces no se
-   dibujara nada. El navegador ya compone solo las animaciones de transform. */
 #testimonios .tst-track{width:max-content;gap:24px;align-items:flex-start;
+    will-change:transform;
     animation:tstScroll 130s linear infinite;animation-direction:normal}
 #testimonios .tst-row.abierta .tst-track{animation-play-state:paused}
 #testimonios .tst-track::after{content:none}
